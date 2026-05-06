@@ -1,0 +1,93 @@
+<aside class="sidebar">
+
+  <div class="sidebar-logo">
+    <div class="s-logo-mark">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <path d="M10 3L17 7.5V14.5L10 19L3 14.5V7.5L10 3Z" fill="rgba(0,0,0,0.4)"/>
+        <path d="M10 6.5L14.5 9.5V14.5L10 17L5.5 14.5V9.5L10 6.5Z" fill="white" fill-opacity="0.92"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-name">NeuralChat</div>
+      <div class="app-ver">v2.1 · RAG Engine</div>
+    </div>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-section-label">Navigation</div>
+
+    <div class="nav-item" [class.active]="activePage === 'chat'" (click)="navigate('chat')">
+      <div class="nav-icon">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H9l-3 2v-2H3a1 1 0 0 1-1-1V3z"
+            stroke="currentColor" stroke-width="1.2" fill="none"/>
+        </svg>
+      </div>
+      <span>Chat IA</span>
+    </div>
+
+    <div class="nav-item" [class.active]="activePage === 'docs'" (click)="navigate('docs')">
+      <div class="nav-icon">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5l-4-4z"
+            stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <path d="M9 1v4h4M5 9h6M5 11h4" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <span>Documents</span>
+    </div>
+
+    <div class="nav-item" *ngIf="isAdmin" [class.active]="activePage === 'admin'" (click)="navigate('admin')">
+      <div class="nav-icon">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M3 13.5c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <span>Administration</span>
+    </div>
+  </nav>
+
+  <div class="nav-section sessions-section" *ngIf="isChatPage">
+    <div class="nav-section-label">Sessions récentes</div>
+
+    <div *ngIf="sessions.length === 0" class="session-empty">
+      Aucune conversation
+    </div>
+
+    <div
+      *ngFor="let session of sessions"
+      class="session-item"
+      [class.active]="session.id === activeSessionId"
+      (click)="selectSession(session.id)">
+      <div class="session-dot" [class.active]="session.id === activeSessionId"></div>
+      <span class="session-title">{{ session.title || 'Nouvelle conversation' }}</span>
+      <button class="delete-btn" (click)="onDeleteClick($event, session.id)" title="Supprimer">✕</button>
+    </div>
+  </div>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-footer" *ngIf="isChatPage">
+    <button class="new-chat-btn" (click)="newChat()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Nouveau chat
+    </button>
+  </div>
+
+</aside>
+
+<!-- ✅ Modal EN DEHORS du <aside> pour échapper au overflow:hidden -->
+<div class="modal-backdrop" *ngIf="confirmDeleteId" (click)="cancelDelete()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-icon">🗑️</div>
+    <h3 class="modal-title">Supprimer cette session ?</h3>
+    <p class="modal-body">Cette action est irréversible. La conversation sera définitivement supprimée.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm" (click)="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>

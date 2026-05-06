@@ -1,0 +1,39 @@
+<div class="bubble-wrapper" [class.user]="message.role === 'user'">
+
+  <div class="bubble">
+
+    <div class="bubble-content"
+         [innerHTML]="parsedContent"></div>
+
+    <!-- Sources panel -->
+    <div class="msg-sources"
+         *ngIf="message.role === 'assistant' && message.sources?.length">
+
+      <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">
+        Sources :
+      </span>
+
+      <div class="source-chip"
+           *ngFor="let src of message.sources"
+           [title]="src.excerpt">
+        📎 {{ src.documentTitle }} · {{ (src.score * 100).toFixed(0) }}%
+      </div>
+
+    </div>
+
+    <!-- Footer feedback — connecté via EventEmitter -->
+    <div class="bubble-footer" *ngIf="message.role === 'assistant'">
+      <div class="feedback-row">
+        <button class="fb-btn"
+                [class.liked]="message.liked"
+                [disabled]="message.liked || message.disliked"
+                (click)="onFeedback(true)">👍</button>
+        <button class="fb-btn"
+                [class.disliked]="message.disliked"
+                [disabled]="message.liked || message.disliked"
+                (click)="onFeedback(false)">👎</button>
+      </div>
+    </div>
+
+  </div>
+</div>

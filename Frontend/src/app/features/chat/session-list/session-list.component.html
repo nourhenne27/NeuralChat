@@ -1,0 +1,42 @@
+<div class="session-list">
+
+  <button class="new-chat-btn" (click)="newChat.emit()">
+    + Nouveau chat
+  </button>
+
+  <div class="sessions-label">SESSIONS RÉCENTES</div>
+
+  <div class="session-empty" *ngIf="sessions.length === 0">
+    Aucune conversation
+  </div>
+
+  <div
+    *ngFor="let s of sessions"
+    class="session-item"
+    [class.active]="s.id === activeSessionId"
+    (click)="sessionSelected.emit(s.id)">
+
+    <div class="session-dot" [class.active]="s.id === activeSessionId"></div>
+    <span class="session-title">{{ s.title || 'Nouvelle conversation' }}</span>
+
+    <button
+      class="delete-btn"
+      title="Supprimer"
+      (click)="onDeleteClick($event, s.id)">
+      ✕
+    </button>
+  </div>
+
+</div>
+
+<div class="modal-backdrop" *ngIf="confirmDeleteId" (click)="cancelDelete()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-icon">🗑️</div>
+    <h3 class="modal-title">Supprimer cette session ?</h3>
+    <p class="modal-body">Cette action est irréversible. La conversation sera définitivement supprimée.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="btn-confirm" (click)="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>

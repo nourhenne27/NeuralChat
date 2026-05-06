@@ -1,0 +1,284 @@
+
+.docs-page {
+  flex:      1;
+  overflow-y: auto;
+  padding:   24px;
+}
+
+
+.upload-zone {
+  border:        1.5px dashed var(--border3);
+  border-radius: 16px;
+  padding:       40px;
+  text-align:    center;
+  margin-bottom: 24px;
+  cursor:        pointer;
+  transition:    all 0.2s;
+  background:    rgba(0, 212, 255, 0.02);
+
+  &:hover {
+    border-color: rgba(0, 212, 255, 0.4);
+    background:   rgba(0, 212, 255, 0.04);
+  }
+
+  &.dragover {
+    border-color: var(--cyan);
+    background:   rgba(0, 212, 255, 0.06);
+  }
+
+  &.uploading {
+    border-color: rgba(0, 229, 160, 0.4);
+    cursor:       default;
+    pointer-events: none;
+  }
+}
+
+.upload-icon {
+  width:           52px;
+  height:          52px;
+  background:      linear-gradient(135deg, rgba(0,212,255,0.10), rgba(0,229,160,0.10));
+  border:          1px solid rgba(0, 212, 255, 0.15);
+  border-radius:   14px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  margin:          0 auto 14px;
+  font-size:       22px;
+}
+
+.upload-title {
+  font-family:   var(--font-display);
+  font-size:     16px;
+  font-weight:   600;
+  margin-bottom: 6px;
+  color:         var(--text);
+}
+
+.upload-sub {
+  font-size: 12px;
+  color:     var(--text2);
+}
+
+.upload-formats {
+  display:         flex;
+  gap:             6px;
+  justify-content: center;
+  flex-wrap:       wrap;
+  margin-top:      14px;
+}
+
+.fmt-tag {
+  background:    var(--surface2);
+  border:        1px solid var(--border2);
+  border-radius: 5px;
+  padding:       3px 9px;
+  font-size:     10px;
+  font-family:   var(--font-mono);
+  color:         var(--text3);
+}
+
+
+.upload-progress-bar {
+  height:        4px;
+  background:    var(--border2);
+  border-radius: 2px;
+  margin-top:    16px;
+  overflow:      hidden;
+  display:       none;
+
+  &.show { display: block; }
+}
+
+.upload-progress-fill {
+  height:     100%;
+  background: linear-gradient(90deg, var(--cyan), var(--emerald));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.upload-pct {
+  font-family: var(--font-mono);
+  font-size:   11px;
+  color:       var(--emerald);
+  margin-top:  8px;
+}
+
+
+.section-header {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-family:  var(--font-display);
+  font-size:    15px;
+  font-weight:  700;
+  flex:         1;
+  display:      flex;
+  align-items:  center;
+  gap:          10px;
+}
+
+.doc-count {
+  font-family:  var(--font-mono);
+  font-size:    11px;
+  background:   var(--surface2);
+  border:       1px solid var(--border2);
+  border-radius: 5px;
+  padding:      3px 9px;
+  color:        var(--text3);
+  font-weight:  400;
+}
+
+
+.docs-table {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: 14px;
+  overflow:      hidden;
+}
+
+.docs-table-header {
+  display:               grid;
+  grid-template-columns: 1fr 90px 110px 90px 90px;
+  padding:               10px 16px;
+  border-bottom:         1px solid var(--border);
+  font-family:           var(--font-mono);
+  font-size:             10px;
+  letter-spacing:        0.06em;
+  text-transform:        uppercase;
+  color:                 var(--text3);
+
+  .col-actions { text-align: right; }
+}
+
+.doc-row {
+  display:               grid;
+  grid-template-columns: 1fr 90px 110px 90px 90px;
+  padding:               12px 16px;
+  align-items:           center;
+  border-bottom:         1px solid var(--border);
+  transition:            background 0.14s;
+
+  &:last-child { border-bottom: none; }
+  &:hover      { background: var(--surface2); }
+}
+
+.doc-name-cell {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+}
+
+.doc-ext {
+  font-family:  var(--font-mono);
+  font-size:    10px;
+  padding:      3px 8px;
+  border-radius: 5px;
+  background:   rgba(124, 106, 255, 0.10);
+  border:       1px solid rgba(124, 106, 255, 0.20);
+  color:        var(--violet);
+  flex-shrink:  0;
+}
+
+.doc-filename {
+  font-size: 13px;
+  color:     var(--text);
+}
+
+.doc-chunks {
+  font-size:   11px;
+  color:       var(--text3);
+  font-family: var(--font-mono);
+  margin-top:  2px;
+}
+
+.doc-size, .doc-date {
+  font-size:   12px;
+  color:       var(--text2);
+  font-family: var(--font-mono);
+}
+
+
+.status-badge {
+  display:     inline-flex;
+  align-items: center;
+  gap:         5px;
+  font-size:   11px;
+  font-family: var(--font-mono);
+  padding:     3px 9px;
+  border-radius: 5px;
+
+  &.status-indexed {
+    background: rgba(0, 229, 160, 0.08);
+    border:     1px solid rgba(0, 229, 160, 0.20);
+    color:      var(--emerald);
+  }
+
+  &.status-pending {
+    background: rgba(255, 181, 71, 0.08);
+    border:     1px solid rgba(255, 181, 71, 0.20);
+    color:      var(--amber);
+  }
+
+  &.status-error {
+    background: rgba(255, 94, 122, 0.08);
+    border:     1px solid rgba(255, 94, 122, 0.20);
+    color:      var(--red);
+  }
+}
+
+.doc-actions {
+  display:         flex;
+  gap:             5px;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  background:    none;
+  border:        1px solid var(--border);
+  border-radius: 6px;
+  padding:       5px 9px;
+  cursor:        pointer;
+  color:         var(--text3);
+  font-size:     12px;
+  transition:    all 0.14s;
+
+  &:hover { border-color: var(--border2); color: var(--text2); }
+
+  &.danger:hover {
+    border-color: rgba(255, 94, 122, 0.35);
+    color:        var(--red);
+  }
+}
+
+
+.table-loading, .table-empty {
+  display:         flex;
+  align-items:     center;
+  gap:             10px;
+  justify-content: center;
+  padding:         32px;
+  color:           var(--text3);
+  font-size:       13px;
+}
+
+.typing-indicator {
+  display:     flex;
+  gap:         4px;
+  align-items: center;
+}
+
+.typing-dot {
+  width:         6px;
+  height:        6px;
+  border-radius: 50%;
+  background:    var(--cyan);
+  opacity:       0.4;
+  animation:     typingDot 1.2s infinite;
+
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.4s; }
+}

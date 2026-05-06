@@ -1,0 +1,26 @@
+
+.confidence-pill {
+  font-family:   var(--font-mono);
+  font-size:     10px;
+  padding:       3px 9px;
+  border-radius: 999px;
+  display:       inline-block;
+
+  &.conf-high {
+    background: rgba(0, 229, 160, 0.10);
+    color:      var(--emerald);
+    border:     1px solid rgba(0, 229, 160, 0.22);
+  }
+
+  &.conf-med {
+    background: rgba(255, 181, 71, 0.10);
+    color:      var(--amber);
+    border:     1px solid rgba(255, 181, 71, 0.22);
+  }
+
+  &.conf-low {
+    background: rgba(255, 94, 122, 0.10);
+    color:      var(--red);
+    border:     1px solid rgba(255, 94, 122, 0.22);
+  }
+}

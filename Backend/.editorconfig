@@ -1,0 +1,31 @@
+# ===== SECRETS — ne jamais committer =====
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.json
+!appsettings.json
+
+# ===== Build =====
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+
+# ===== Visual Studio =====
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== dotnet =====
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db

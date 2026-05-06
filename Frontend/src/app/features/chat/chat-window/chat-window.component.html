@@ -1,0 +1,112 @@
+<div class="chat-main">
+
+  <!-- Empty state -->
+  <div class="empty-chat" *ngIf="messages.length === 0 && !isLoading">
+    <div class="empty-icon">🧠</div>
+    <div class="empty-title">Assistant RAG prêt</div>
+    <div class="empty-sub">
+      Posez une question, je consulte la base documentaire
+      pour vous répondre avec précision.
+    </div>
+    <div class="suggestion-chips">
+      <div class="sugg-chip" *ngFor="let s of suggestions" (click)="sendMessage(s)">
+        {{ s }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages-scroll" #scrollContainer *ngIf="messages.length > 0 || isLoading">
+    <div *ngFor="let msg of messages; trackBy: trackByIndex"
+         class="msg-wrap"
+         [class.user]="msg.role === 'user'">
+
+      <div class="msg-avatar"
+           [class.ai]="msg.role === 'assistant'"
+           [class.user]="msg.role === 'user'">
+        {{ msg.role === 'user' ? '👤' : '🧠' }}
+      </div>
+
+      <div class="msg-bubble">
+        <div *ngIf="msg.role === 'assistant'">
+          <markdown [data]="msg.content"></markdown>
+        </div>
+        <div *ngIf="msg.role === 'user'">{{ msg.content }}</div>
+
+        <div class="msg-sources" *ngIf="msg.role === 'assistant' && msg.sources?.length">
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">
+            Sources :
+          </span>
+          <div class="source-chip" *ngFor="let src of msg.sources">
+            📎 {{ src.documentTitle }} · {{ (src.score * 100).toFixed(0) }}%
+          </div>
+        </div>
+
+        <div class="msg-meta" *ngIf="msg.role === 'assistant'">
+          <div class="feedback-row">
+            <button class="fb-btn"
+                    [class.liked]="msg.liked"
+                    [disabled]="msg.liked || msg.disliked"
+                    (click)="openFeedbackModal(msg, true)">👍</button>
+            <button class="fb-btn"
+                    [class.disliked]="msg.disliked"
+                    [disabled]="msg.liked || msg.disliked"
+                    (click)="openFeedbackModal(msg, false)">👎</button>
+          </div>
+          <span *ngIf="msg.liked"    style="font-size:11px;color:#6c63ff;margin-left:8px;">✓ Merci !</span>
+          <span *ngIf="msg.disliked" style="font-size:11px;color:#6c63ff;margin-left:8px;">✓ Noté !</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div class="msg-wrap" *ngIf="isLoading">
+      <div class="msg-avatar ai">🧠</div>
+      <div class="msg-bubble">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input-area">
+    <div class="chat-input-wrap">
+      <textarea
+        class="chat-textarea"
+        [(ngModel)]="inputText"
+        (keydown)="onKeyDown($event)"
+        placeholder="Posez votre question… (Entrée pour envoyer)"
+        rows="1">
+      </textarea>
+      <button class="send-btn"
+              (click)="sendMessage()"
+              [disabled]="!inputText.trim() || isLoading">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M14 8L2 2l2.5 6L2 14l12-6z" fill="black" stroke="black" stroke-width="0.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="input-footer">
+      <div class="rag-indicator">
+        <div class="rag-dot"></div>
+        RAG Engine actif
+      </div>
+      <span>·</span>
+      <span>{{ documentsCount }} documents indexés</span>
+      <span style="margin-left:auto">Shift+Entrée pour nouvelle ligne</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Feedback Modal -->
+<app-feedback-modal
+  *ngIf="showFeedbackModal"
+  [isPositive]="feedbackIsPositive"
+  (confirmed)="onFeedbackConfirmed($event)"
+  (cancelled)="onFeedbackCancelled()">
+</app-feedback-modal>

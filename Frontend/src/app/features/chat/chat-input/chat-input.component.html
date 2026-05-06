@@ -1,0 +1,16 @@
+<div class="chat-input-container">
+  <textarea
+    [(ngModel)]="text"
+    (keydown)="onKeyDown($event)"
+    [disabled]="disabled"
+    placeholder="Posez votre question… (Entrée pour envoyer)"
+    rows="1"
+    class="chat-textarea">
+  </textarea>
+
+  <button class="send-btn"
+          (click)="send()"
+          [disabled]="disabled || !text.trim()">
+    ➤
+  </button>
+</div>

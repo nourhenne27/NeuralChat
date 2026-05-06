@@ -1,0 +1,96 @@
+<div class="admin-page fade-in">
+
+  <!-- ── STATS GRID ───────────────────────────────────────── -->
+  <div class="stats-grid">
+    <div class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-icon" [ngClass]="stat.colorClass">{{ stat.icon }}</div>
+      <div class="stat-value">{{ stat.value }}</div>
+      <div class="stat-label">{{ stat.label }}</div>
+    </div>
+  </div>
+
+  <!-- ── ACTIONS BAR ─────────────────────────────────────── -->
+  <div class="actions-bar">
+    <button class="action-btn btn-register" (click)="openRegisterModal()">
+      <span>＋</span> Créer un utilisateur
+    </button>
+    <button class="action-btn btn-export" (click)="exportReport()">
+      <span>↓</span> Exporter le rapport
+    </button>
+  </div>
+
+  <!-- ── BANNERS ─────────────────────────────────────────── -->
+  <div class="error-banner"   *ngIf="error">⚠ {{ error }}</div>
+  <div class="success-banner" *ngIf="success">✓ {{ success }}</div>
+
+  <!-- ── MAIN GRID ──────────────────────────────────────── -->
+  <div class="admin-grid">
+
+    <!-- Gestion des utilisateurs -->
+    <div class="admin-panel">
+      <div class="panel-header">
+        <div class="panel-title">👥 Utilisateurs</div>
+        <span class="panel-count">{{ users.length }}</span>
+      </div>
+
+      <div class="user-table">
+        <div class="user-row table-head">
+          <span>Utilisateur</span>
+          <span>Rôle actuel</span>
+          <span>Changer rôle</span>
+          <span>Inscrit le</span>
+        </div>
+
+        <div class="user-row" *ngFor="let user of users">
+          <div class="user-info">
+            <div class="u-avatar" [ngClass]="getRoleAvatarClass(user.role)">
+              {{ user.email[0].toUpperCase() }}
+            </div>
+            <div>
+              <div class="u-name">{{ user.email.split('@')[0] }}</div>
+              <div class="u-email">{{ user.email }}</div>
+            </div>
+          </div>
+
+          <div>
+            <span class="role-pill"   >
+              {{ user.role }}
+            </span>
+          </div>
+
+          <div>
+            <select class="role-select" [value]="user.role" (change)="changeRole(user.id, $event)">
+              <option value="User">User</option>
+              <option value="Manager">Manager</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+
+          <div class="u-date">{{ user.createdAt }}</div>
+        </div>
+
+        <div class="empty-row"   *ngIf="!users.length && !isLoadingUsers">Aucun utilisateur</div>
+        <div class="loading-row" *ngIf="isLoadingUsers">Chargement…</div>
+      </div>
+    </div>
+
+    <!-- Activité récente -->
+    <div class="admin-panel">
+      <div class="panel-header">
+        <div class="panel-title">⚡ Activité récente</div>
+      </div>
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let act of activities">
+          <div class="act-dot"></div>
+          <div class="act-content">
+            <div class="act-text" [innerHTML]="formatActivity(act)"></div>
+            <div class="act-time">{{ formatTime(act.occurredAt) }}</div>
+          </div>
+        </div>
+        <div class="empty-row"   *ngIf="!activities.length && !isLoadingActivity">Aucune activité</div>
+        <div class="loading-row" *ngIf="isLoadingActivity">Chargement…</div>
+      </div>
+    </div>
+
+  </div>
+</div>

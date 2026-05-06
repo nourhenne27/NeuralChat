@@ -1,0 +1,103 @@
+<div class="docs-page fade-in">
+
+  
+  <div class="upload-zone"
+    [class.dragover]="isDragOver"
+    [class.uploading]="isUploading"
+    (click)="triggerFileInput()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)">
+
+    <div class="upload-icon">📄</div>
+    <div class="upload-title">
+      {{ isUploading ? 'Indexation en cours : ' + uploadName : 'Déposez vos documents ici' }}
+    </div>
+    <div class="upload-sub" *ngIf="!isUploading">
+      Cliquez ou glissez-déposez pour indexer
+    </div>
+
+    <div class="upload-formats" *ngIf="!isUploading">
+      <span class="fmt-tag">PDF</span>
+      <span class="fmt-tag">DOCX</span>
+      <span class="fmt-tag">TXT</span>
+      <span class="fmt-tag">MD</span>
+    </div>
+
+    <div class="upload-progress-bar" [class.show]="isUploading">
+      <div class="upload-progress-fill" [style.width.%]="uploadProgress"></div>
+    </div>
+    <div class="upload-pct" *ngIf="isUploading">{{ uploadProgress.toFixed(0) }}%</div>
+
+    <input
+      type="file"
+      id="file-input"
+      accept=".pdf,.docx,.txt,.md"
+      style="display:none"
+      (change)="onFileSelected($event)"/>
+  </div>
+
+
+  <div class="section-header">
+    <h2 class="section-title">
+      Documents indexés
+      <span class="doc-count">{{ documents.length }} documents</span>
+    </h2>
+    <button class="btn-sm btn-ghost" (click)="loadDocuments()">↻ Actualiser</button>
+  </div>
+
+  
+  <div class="docs-table">
+
+    <div class="docs-table-header">
+      <div>Fichier</div>
+      <div>Taille</div>
+      <div>Indexé le</div>
+      <div>Statut</div>
+      <div class="col-actions">Actions</div>
+    </div>
+
+    <div class="table-loading" *ngIf="isLoading">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+      Chargement…
+    </div>
+
+   
+    <div class="doc-row" *ngFor="let doc of documents">
+
+      <div class="doc-name-cell">
+        <span class="doc-ext">{{ doc.ext }}</span>
+        <div>
+          <div class="doc-filename">{{ doc.name }}</div>
+         
+        </div>
+      </div>
+
+    
+
+      <div class="doc-date">{{ doc.date }}</div>
+
+      <div>
+        <span class="status-badge" [ngClass]="getStatusClass(doc.status)">
+          {{ getStatusLabel(doc.status) }}
+        </span>
+      </div>
+
+      <div class="doc-actions">
+     
+        <button class="icon-btn danger" (click)="deleteDocument(doc.id)" title="Supprimer">✕</button>
+      </div>
+
+    </div>
+
+   
+    <div class="table-empty" *ngIf="!isLoading && documents.length === 0">
+      Aucun document indexé. Uploadez votre premier document ci-dessus.
+    </div>
+
+  </div>
+</div>

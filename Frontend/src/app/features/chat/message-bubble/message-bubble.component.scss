@@ -1,0 +1,87 @@
+
+.msg-wrap {
+  display: flex;
+  gap: 12px;
+  animation: fadeUp .3s ease both;
+}
+
+
+.msg-wrap.user {
+  flex-direction: row-reverse;
+}
+
+
+.msg-bubble {
+  max-width: 72%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+
+.msg-wrap.user .msg-bubble {
+  background: rgba(124, 106, 255, 0.12);
+  border-color: rgba(124, 106, 255, 0.2);
+}
+
+
+.msg-sources {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+
+.source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--cyan2);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.source-chip:hover {
+  background: rgba(0, 212, 255, 0.12);
+}
+
+
+.feedback-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.fb-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text3);
+  transition: all .15s;
+}
+
+.fb-btn:hover {
+  border-color: var(--border2);
+  color: var(--text2);
+}
+
+.fb-btn.liked {
+  border-color: rgba(0, 229, 160, 0.3);
+  color: var(--emerald);
+}

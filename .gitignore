@@ -1,0 +1,16 @@
+# Backend
+Backend/api/bin/
+Backend/api/obj/
+Backend/*/bin/
+Backend/*/obj/
+*.user
+appsettings.Development.json
+
+# Frontend
+Frontend/node_modules/
+Frontend/.angular/
+Frontend/dist/
+
+# General
+.vs/
+*.suo

@@ -1,0 +1,91 @@
+.navbar {
+  width:         100%;
+  height:        52px;
+  flex-shrink:   0;
+  display:       flex;
+  align-items:   center;
+  justify-content: space-between;
+  padding:       0 20px;
+  background:    var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-sizing:    border-box;
+}
+
+.navbar-left {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size:   15px;
+  font-weight: 700;
+  color:       var(--text);
+}
+
+.navbar-right {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+}
+
+.user-pill {
+  display:       flex;
+  align-items:   center;
+  gap:           9px;
+  padding:       5px 10px;
+  border-radius: 10px;
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+}
+
+.user-avatar {
+  width:           30px;
+  height:          30px;
+  border-radius:   8px;
+  background:      linear-gradient(135deg, var(--violet), var(--cyan));
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-family:     var(--font-display);
+  font-size:       12px;
+  font-weight:     700;
+  color:           #fff;
+  flex-shrink:     0;
+}
+
+.user-info {
+  display:        flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size:   12px;
+  font-weight: 500;
+  color:       var(--text);
+  line-height: 1.2;
+}
+
+.user-role-tag {
+  font-family: var(--font-mono);
+  font-size:   10px;
+  color:       var(--text3);
+}
+
+.logout-btn {
+  background:    none;
+  border:        none;
+  cursor:        pointer;
+  color:         var(--text3);
+  padding:       6px;
+  display:       flex;
+  align-items:   center;
+  border-radius: 7px;
+  transition:    all 0.15s;
+
+  &:hover {
+    color:      var(--red);
+    background: rgba(255, 94, 122, 0.08);
+  }
+}

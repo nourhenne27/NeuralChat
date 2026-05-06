@@ -1,0 +1,374 @@
+// ══════════════════════════════════════════════
+// ADMIN DASHBOARD – styles
+// ══════════════════════════════════════════════
+
+// ── Page header ──────────────────────────────
+.page-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  margin-bottom:   28px;
+  flex-wrap:       wrap;
+  gap:             16px;
+}
+
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size:   24px;
+  font-weight: 700;
+  color:       #eef0f8;
+  margin:      0;
+}
+
+.page-subtitle {
+  font-size:  13px;
+  color:      #5a6080;
+  margin:     4px 0 0;
+}
+
+.header-actions {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+}
+
+// ── ADD USER button (primary CTA) ────────────
+.btn-add-user {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           8px;
+  padding:       10px 20px;
+  border-radius: 10px;
+  font-size:     13px;
+  font-family:   'Instrument Sans', sans-serif;
+  font-weight:   600;
+  cursor:        pointer;
+  border:        none;
+  background:    linear-gradient(135deg, #00a8cc 0%, #00b87d 100%);
+  color:         #000;
+  transition:    all 0.2s;
+  box-shadow:    0 4px 15px rgba(0, 184, 125, 0.25);
+
+  &:hover {
+    opacity:   0.88;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 184, 125, 0.35);
+  }
+
+  &:active { transform: translateY(0); }
+
+  .btn-icon {
+    font-size:   16px;
+    line-height: 1;
+  }
+}
+
+.btn-export {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       10px 16px;
+  border-radius: 10px;
+  font-size:     12px;
+  font-family:   'Instrument Sans', sans-serif;
+  cursor:        pointer;
+  background:    rgba(255, 255, 255, 0.05);
+  border:        1px solid rgba(255, 255, 255, 0.10);
+  color:         #9da3bf;
+  transition:    all 0.15s;
+
+  &:hover {
+    background:   rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.16);
+    color:        #eef0f8;
+  }
+}
+
+// ── Error banner ─────────────────────────────
+.error-banner {
+  margin-bottom: 16px;
+  padding:       12px 16px;
+  border-radius: 10px;
+  background:    rgba(255, 94, 122, 0.1);
+  border:        1px solid rgba(255, 94, 122, 0.25);
+  color:         rgba(255, 94, 122, 0.9);
+  font-size:     13px;
+}
+
+// ── KPI Grid ─────────────────────────────────
+.stats-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap:                   16px;
+  margin-bottom:         28px;
+}
+
+.stat-card {
+  display:       flex;
+  align-items:   center;
+  gap:           14px;
+  padding:       18px 20px;
+  border-radius: 14px;
+  background:    #131627;
+  border:        1px solid rgba(255, 255, 255, 0.07);
+  transition:    border-color 0.2s;
+
+  &:hover { border-color: rgba(255, 255, 255, 0.12); }
+}
+
+.stat-icon {
+  width:           44px;
+  height:          44px;
+  border-radius:   12px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       20px;
+  flex-shrink:     0;
+
+  &.si-blue   { background: rgba(0, 212, 255, 0.10); border: 1px solid rgba(0, 212, 255, 0.15); }
+  &.si-purple { background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.15); }
+  &.si-green  { background: rgba(0, 229, 160, 0.10); border: 1px solid rgba(0, 229, 160, 0.15); }
+  &.si-yellow { background: rgba(255, 181, 71, 0.10); border: 1px solid rgba(255, 181, 71, 0.15); }
+}
+
+.stat-label {
+  font-size:  11px;
+  color:      #5a6080;
+  font-family:'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-value {
+  font-size:   26px;
+  font-weight: 700;
+  color:       #eef0f8;
+  font-family: 'Syne', sans-serif;
+  line-height: 1.1;
+  margin-top:  4px;
+}
+
+.stat-skeleton {
+  height:        28px;
+  width:         60px;
+  border-radius: 6px;
+  background:    linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation:     shimmer 1.5s infinite;
+  margin-top:    4px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ── Main content grid ─────────────────────────
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Panel ─────────────────────────────────────
+.panel {
+  background:    #131627;
+  border:        1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  overflow:      hidden;
+}
+
+.panel-header {
+  display:         flex;
+  align-items:     center;
+  gap:             10px;
+  padding:         16px 20px;
+  border-bottom:   1px solid rgba(255, 255, 255, 0.06);
+  background:      #181c30;
+}
+
+.panel-title {
+  font-family: 'Syne', sans-serif;
+  font-size:   14px;
+  font-weight: 700;
+  color:       #eef0f8;
+  margin:      0;
+}
+
+.badge {
+  padding:       3px 9px;
+  border-radius: 20px;
+  font-size:     11px;
+  font-family:   'DM Mono', monospace;
+  background:    rgba(0, 212, 255, 0.1);
+  color:         rgba(0, 212, 255, 0.8);
+  border:        1px solid rgba(0, 212, 255, 0.15);
+}
+
+// ── Table ─────────────────────────────────────
+.table-wrap { overflow-x: auto; }
+
+table {
+  width:           100%;
+  border-collapse: collapse;
+}
+
+th {
+  padding:        10px 20px;
+  text-align:     left;
+  font-size:      11px;
+  font-family:    'DM Mono', monospace;
+  color:          #5a6080;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom:  1px solid rgba(255, 255, 255, 0.06);
+  white-space:    nowrap;
+}
+
+td {
+  padding:       12px 20px;
+  font-size:     13px;
+  color:         #c8cbde;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+.td-email {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  font-family: 'Instrument Sans', sans-serif;
+}
+
+.avatar {
+  width:           30px;
+  height:          30px;
+  border-radius:   50%;
+  background:      rgba(0, 212, 255, 0.15);
+  border:          1px solid rgba(0, 212, 255, 0.2);
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       12px;
+  font-weight:     700;
+  color:           rgba(0, 212, 255, 0.9);
+  flex-shrink:     0;
+}
+
+.td-date {
+  font-family: 'DM Mono', monospace;
+  font-size:   12px;
+  color:       #5a6080;
+}
+
+.role-badge {
+  padding:       4px 10px;
+  border-radius: 6px;
+  font-size:     11px;
+  font-family:   'DM Mono', monospace;
+  font-weight:   600;
+
+  &.role-user    { background: rgba(0, 212, 255, 0.1); color: rgba(0, 212, 255, 0.9); border: 1px solid rgba(0, 212, 255, 0.2); }
+  &.role-manager { background: rgba(255, 181, 71, 0.1); color: rgba(255, 181, 71, 0.9); border: 1px solid rgba(255, 181, 71, 0.2); }
+  &.role-admin   { background: rgba(255, 94, 122, 0.1); color: rgba(255, 94, 122, 0.9); border: 1px solid rgba(255, 94, 122, 0.2); }
+}
+
+.role-select {
+  background:    #1e2238;
+  border:        1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  padding:       6px 10px;
+  color:         #c8cbde;
+  font-size:     12px;
+  cursor:        pointer;
+  outline:       none;
+  transition:    border-color 0.15s;
+
+  &:hover, &:focus { border-color: rgba(0, 212, 255, 0.35); }
+}
+
+// ── Empty state ───────────────────────────────
+.empty-state {
+  padding:    40px 20px;
+  text-align: center;
+  color:      #5a6080;
+
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+  p { font-size: 13px; margin: 0 0 14px; }
+}
+
+.btn-add-user-inline {
+  padding:       8px 16px;
+  border-radius: 8px;
+  font-size:     12px;
+  cursor:        pointer;
+  background:    rgba(0, 212, 255, 0.1);
+  border:        1px solid rgba(0, 212, 255, 0.25);
+  color:         rgba(0, 212, 255, 0.9);
+  transition:    all 0.15s;
+
+  &:hover { background: rgba(0, 212, 255, 0.15); }
+}
+
+// ── Loading skeleton rows ─────────────────────
+.loading-rows { padding: 12px 20px; }
+
+.skeleton-row {
+  height:        36px;
+  border-radius: 8px;
+  background:    linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation:     shimmer 1.5s infinite;
+  margin-bottom: 10px;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+// ── Activity feed ─────────────────────────────
+.activity-item {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           12px;
+  padding:       14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+
+  &:last-child { border-bottom: none; }
+}
+
+.activity-dot {
+  width:         8px;
+  height:        8px;
+  border-radius: 50%;
+  background:    rgba(0, 212, 255, 0.6);
+  margin-top:    5px;
+  flex-shrink:   0;
+}
+
+.activity-actor {
+  font-size:   12px;
+  font-weight: 600;
+  color:       #eef0f8;
+  font-family: 'DM Mono', monospace;
+}
+
+.activity-action {
+  font-size:  12px;
+  color:      #7a80a0;
+  margin-top: 2px;
+}
+
+.activity-time {
+  font-size:   11px;
+  color:       #5a6080;
+  margin-top:  4px;
+  font-family: 'DM Mono', monospace;
+}
