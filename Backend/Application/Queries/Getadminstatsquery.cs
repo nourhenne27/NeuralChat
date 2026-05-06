@@ -20,15 +20,15 @@ public class GetAdminStatsQueryHandler : IRequestHandler<GetAdminStatsQuery, Adm
 
     public async Task<AdminStatsDto> Handle(GetAdminStatsQuery request, CancellationToken cancellationToken)
     {
-        // Remplacez cette ligne :
-        var totalQuestions = 0; // Valeur par défaut ou à adapter selon la structure réelle de votre contexte
+        var totalQuestions = await _sqlContext.ChatSessions
+            .SelectMany(s => s.Messages)
+            .Where(m => m.Role == "user")
+            .CountAsync(cancellationToken);
 
         var totalDocuments = await _vectorContext.Documents
             .CountAsync(cancellationToken);
 
-        var totalUsers = await _sqlContext.ChatSessions
-            .Select(cs => cs.UserId)
-            .Distinct()
+        var totalUsers = await _sqlContext.Users
             .CountAsync(cancellationToken);
 
         var averageScore = await _sqlContext.Feedbacks
