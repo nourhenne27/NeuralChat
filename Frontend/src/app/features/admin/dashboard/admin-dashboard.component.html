@@ -104,11 +104,11 @@
               {{ user.email }}
             </td>
 
-            <td>
-              <span class="role-badge" [ngClass]="'role-' + user.role.toLowerCase()">
-                {{ user.role }}
-              </span>
-            </td>
+<td>
+  <span class="role-badge" [ngClass]="'role-' + (user.role | lowercase)">
+    {{ user.role }}
+  </span>
+</td>
 
             <td class="td-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
 

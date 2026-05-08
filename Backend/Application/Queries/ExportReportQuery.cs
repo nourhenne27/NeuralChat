@@ -20,11 +20,7 @@ public class ExportReportQueryHandler : IRequestHandler<ExportReportQuery, Expor
 
     public async Task<ExportReportDto> Handle(ExportReportQuery request, CancellationToken cancellationToken)
     {
-        var users = await _sqlContext.ChatSessions
-            .Include(s => s.User)
-            .Where(s => s.User != null)
-            .Select(s => s.User!)
-            .Distinct()
+        var users = await _sqlContext.Users
             .Select(u => new UserDto
             {
                 Id = u.Id,

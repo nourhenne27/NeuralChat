@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -31,7 +31,8 @@ export class AdminDashboardComponent implements OnInit {
     private adminService: AdminService,
     private modalService: ModalService,
     private toastService: ToastService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -75,10 +76,12 @@ export class AdminDashboardComponent implements OnInit {
     this.loadingRoleUserId = userId;
     this.adminService.updateUserRole(userId, role).subscribe({
       next: () => {
-        const user = this.users.find(u => u.id === userId);
-        if (user) user.role = role;
+        this.users = this.users.map(u =>
+          u.id === userId ? { ...u, role } : u
+        );
         this.loadingRoleUserId = null;
         this.toastService.success('Rôle mis à jour avec succès.');
+        this.cdr.detectChanges();
       },
       error: (err: Error) => {
         this.error = err.message;
@@ -88,7 +91,10 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   exportReport(): void {
-    this.adminService.exportReport();
+    this.adminService.exportReport().subscribe({
+      next: () => this.toastService.success('Rapport téléchargé avec succès.'),
+      error: () => this.toastService.error('Erreur lors de l\'export.')
+    });
   }
 
   openAddUserModal(): void {
@@ -121,5 +127,4 @@ export class AdminDashboardComponent implements OnInit {
       complete: () => {}
     });
   }
-} 
-
+}

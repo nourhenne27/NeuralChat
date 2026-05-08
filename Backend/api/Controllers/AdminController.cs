@@ -5,6 +5,8 @@ using Application.Commands;
 using Application.DTOs;
 using Application.Queries;
 using Domain.Enums;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Api.Controllers;
 
@@ -36,10 +38,8 @@ public class AdminController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
         var command = new RegisterUserCommand(request.Email, request.Password, request.Role);
         var result = await _mediator.Send(command);
-
         return CreatedAtAction(nameof(GetAllUsers), new { }, result);
     }
 
@@ -50,7 +50,6 @@ public class AdminController : ControllerBase
     {
         if (!Enum.IsDefined(typeof(UserRole), request.Role))
             return BadRequest("Rôle invalide.");
-
         await _mediator.Send(new UpdateUserRoleCommand(id, request.Role));
         return NoContent();
     }
@@ -69,7 +68,6 @@ public class AdminController : ControllerBase
     {
         if (limit is < 1 or > 100)
             return BadRequest("limit doit être entre 1 et 100.");
-
         var result = await _mediator.Send(new GetRecentActivityQuery(limit));
         return Ok(result);
     }
@@ -80,14 +78,15 @@ public class AdminController : ControllerBase
     {
         var report = await _mediator.Send(new ExportReportQuery());
 
-        var json = System.Text.Json.JsonSerializer.Serialize(report, new System.Text.Json.JsonSerializerOptions
+        var json = JsonSerializer.Serialize(report, new JsonSerializerOptions
         {
-            WriteIndented = true
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonStringEnumConverter() }
         });
 
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var fileName = $"rapport_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
-
         return File(bytes, "application/json", fileName);
     }
 }

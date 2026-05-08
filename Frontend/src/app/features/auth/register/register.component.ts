@@ -47,10 +47,10 @@ export class RegisterComponent {
 
     const { email, password } = this.form.value;
 
-    this.authService.login({ email, password }).subscribe({
+    this.authService.register({ email, password, role: 'User' }).subscribe({
       next: () => this.router.navigate(['/chat']),
       error: (err) => {
-        this.error = err?.error?.message || 'Erreur lors de la connexion.';
+        this.error = err?.error?.message || 'Erreur lors de la création du compte.';
         this.isLoading = false;
       }
     });

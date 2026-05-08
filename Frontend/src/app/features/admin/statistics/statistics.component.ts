@@ -114,8 +114,10 @@ export class StatisticsComponent implements OnInit {
   }
 
   exportReport(): void {
-    this.adminService.exportReport();
-    this.showSuccess('Export en cours de téléchargement…');
+    this.adminService.exportReport().subscribe({
+      next: () => this.showSuccess('Export téléchargé avec succès.'),
+      error: () => this.showError('Erreur lors de l\'export.')
+    });
   }
 
   getRoleClass(role: string): string {
@@ -158,5 +160,5 @@ export class StatisticsComponent implements OnInit {
     this.success = msg; this.error = '';
     setTimeout(() => this.success = '', 4000);
   }
-} 
+}
 

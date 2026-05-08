@@ -231,7 +231,7 @@ const noAnswerPhrases = [
   'pas d\'information',
   'je ne peux pas comprendre',  // ← ajouter
   'puis-je vous aider avec autre chose',  // ← ajouter
-];0.
+];
   
   assistantMsg.hasAnswer = !!assistantMsg.content && 
     !noAnswerPhrases.some(phrase => content.includes(phrase));
