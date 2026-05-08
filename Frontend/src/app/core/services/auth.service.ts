@@ -17,22 +17,30 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
+  private normalizeRole(role: any): string {
+    if (typeof role === 'string' && ['Admin','Manager','User'].includes(role)) return role;
+    const map: Record<number, string> = { 0: 'Admin', 1: 'Manager', 2: 'User' };
+    return map[role as number] ?? 'User';
+  }
 
   private loadFromStorage(): AuthResponseDto | null {
     try {
       const stored = localStorage.getItem(this.AUTH_USER_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      parsed.role = this.normalizeRole(parsed.role);
+      return parsed;
     } catch {
       return null;
     }
   }
-
 
   login(dto: LoginRequestDto): Observable<AuthResponseDto> {
     return this.http
       .post<AuthResponseDto>(`${environment.apiUrl}/auth/login`, dto)
       .pipe(
         tap(response => {
+          response.role = this.normalizeRole(response.role);
           localStorage.setItem(this.TOKEN_KEY,     response.token);
           localStorage.setItem(this.AUTH_USER_KEY, JSON.stringify(response));
           this.currentUserSubject.next(response);
@@ -40,13 +48,10 @@ export class AuthService {
       );
   }
 
-
-  logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.AUTH_USER_KEY);
+logout(): void {
+    localStorage.clear();
     this.currentUserSubject.next(null);
   }
-
 
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
@@ -55,7 +60,6 @@ export class AuthService {
   isLoggedIn(): boolean {
     const token = this.getToken();
     if (!token) return false;
-   
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.exp * 1000 > Date.now();

@@ -101,9 +101,13 @@ export class DocumentListComponent implements OnInit {
 
   onDragLeave(): void { this.isDragOver = false; }
 
-  onDrop(e: DragEvent): void {
+onDrop(e: DragEvent): void {
     e.preventDefault();
     this.isDragOver = false;
+    if (!this.canUpload) {
+      this.uploadError = 'Vous n\'avez pas les droits pour uploader des documents.';
+      return;
+    }
     const file = e.dataTransfer?.files?.[0];
     if (file) this.uploadFile(file);
   }

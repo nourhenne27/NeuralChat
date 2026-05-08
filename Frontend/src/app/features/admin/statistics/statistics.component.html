@@ -53,7 +53,7 @@
           </div>
 
           <div>
-            <span class="role-pill"   >
+            <span class="role-pill" [ngClass]="getRoleClass(user.role)">
               {{ user.role }}
             </span>
           </div>
@@ -66,7 +66,8 @@
             </select>
           </div>
 
-          <div class="u-date">{{ user.createdAt }}</div>
+          <!-- Date formatée en dd/mm/yyyy au lieu de l'ISO brut -->
+          <div class="u-date">{{ formatDate(user.createdAt) }}</div>
         </div>
 
         <div class="empty-row"   *ngIf="!users.length && !isLoadingUsers">Aucun utilisateur</div>

@@ -2,10 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
-import {
-  AdminStatsDto, ActivityItemDto
-} from '../../../core/models/document';
+import { AdminStatsDto, ActivityItemDto } from '../../../core/models/document';
 import { UserDto } from '../../../core/models/auth-response';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -22,19 +21,29 @@ export class AdminDashboardComponent implements OnInit {
   isLoadingUsers    = true;
   isLoadingActivity = true;
   error             = '';
+  isAdmin           = false;
 
   readonly ROLES: ('User' | 'Manager' | 'Admin')[] = ['User', 'Manager', 'Admin'];
 
   constructor(
     private adminService: AdminService,
     private modalService: ModalService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.isAdmin = this.authService.isAdmin();
     this.loadStats();
-    this.loadUsers();
     this.loadActivity();
+    if (this.isAdmin) this.loadUsers();
+    else this.isLoadingUsers = false;
+  }
+
+  private normalizeRole(role: any): string {
+    if (typeof role === 'string' && ['Admin','Manager','User'].includes(role)) return role;
+    const map: Record<number, string> = { 0: 'Admin', 1: 'Manager', 2: 'User' };
+    return map[role as number] ?? 'User';
   }
 
   loadStats(): void {
@@ -46,7 +55,10 @@ export class AdminDashboardComponent implements OnInit {
 
   loadUsers(): void {
     this.adminService.getAllUsers().subscribe({
-      next:  users => { this.users = users; this.isLoadingUsers = false; },
+      next: users => {
+        this.users = users.map(u => ({ ...u, role: this.normalizeRole(u.role) }));
+        this.isLoadingUsers = false;
+      },
       error: (err: Error) => { this.error = err.message; this.isLoadingUsers = false; }
     });
   }
@@ -73,49 +85,34 @@ export class AdminDashboardComponent implements OnInit {
     this.adminService.exportReport();
   }
 
-  // ── Ouvrir la modal d'ajout d'utilisateur ────────────────────
   openAddUserModal(): void {
-    console.log('🚀 Modal ouverte');
-
+    if (!this.isAdmin) return;
     const result$ = this.modalService.openRegisterModal();
-
     result$.subscribe({
       next: (data) => {
-        console.log('📥 Données reçues du modal:', data);
         if (!data) return;
-
         this.modalService.setLoading(true);
-
         this.adminService.registerUser(data).subscribe({
           next: (res) => {
-            console.log('✅ Utilisateur créé:', res);
             this.modalService.closeModal();
-
-            // Correction : Utiliser la bonne structure de AuthResponseDto
             const newUser: UserDto = {
-              id:        res.userId || '',           // ← important
-              email:     res.email,
-              role:      res.role,
+              id: res.userId || '',
+              email: res.email,
+              role: this.normalizeRole(res.role),
               createdAt: new Date().toISOString()
             };
-
             this.users = [newUser, ...this.users];
             if (this.stats) this.stats.totalUsers++;
-
-            this.toastService.success(`Utilisateur ${res.email} créé avec succès !`);
+            this.toastService.success(`Utilisateur ${res.email} créé !`);
           },
           error: (err) => {
-            console.error('❌ Erreur création:', err);
             this.modalService.setLoading(false);
-            const msg = err?.error?.message || err?.message || 'Erreur lors de la création';
-            this.toastService.error(msg);
+            this.toastService.error(err?.error?.message || 'Erreur lors de la création');
           }
         });
       },
-      error: (err) => {
-        console.error(err);
-        this.modalService.closeModal();
-      }
+      error: (err) => { console.error(err); this.modalService.closeModal(); },
+      complete: () => {}
     });
   }
 }

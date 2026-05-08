@@ -10,7 +10,7 @@ namespace Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Manager")]
 public class AdminController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -22,6 +22,7 @@ public class AdminController : ControllerBase
 
     // ===================== GET ALL USERS =====================
     [HttpGet("users")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _mediator.Send(new GetAllUsersQuery());
@@ -30,6 +31,7 @@ public class AdminController : ControllerBase
 
     // ===================== REGISTER USER (Admin only) =====================
     [HttpPost("users/register")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterRequestDto request)
     {
         if (!ModelState.IsValid)
@@ -43,6 +45,7 @@ public class AdminController : ControllerBase
 
     // ===================== UPDATE USER ROLE =====================
     [HttpPut("users/{id:guid}/role")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateUserRoleRequest request)
     {
         if (!Enum.IsDefined(typeof(UserRole), request.Role))

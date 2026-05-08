@@ -1,9 +1,15 @@
+export interface SourceDto {
+  documentTitle: string;
+  excerpt:       string;
+  score:         number;
+}
+
 export interface CreateSessionResponse {
   sessionId: string;
 }
 
 export interface ChatRequestDto {
-  sessionId?: string | null;   // ← null ou undefined = backend crée la session
+  sessionId?: string | null;
   message: string;
 }
 
@@ -13,6 +19,7 @@ export interface ChatMessageDto {
   role:      'user' | 'assistant';
   content:   string;
   createdAt: string;
+  sources:   SourceDto[];
 }
 
 export interface ChatSessionDto {
@@ -23,17 +30,13 @@ export interface ChatSessionDto {
 }
 
 export interface ChatMessage {
-  role:      'user' | 'assistant';
-  content:   string;
-  timestamp: Date;
-  messageId?: string;
-  sources?: {
-    documentTitle: string;
-    excerpt:       string;
-    score:         number;
-  }[];
-  confidence?:  number;
+  role:        'user' | 'assistant';
+  content:     string;
+  timestamp:   Date;
+  messageId?:  string;
+  sources?:    SourceDto[];
+  confidence?: number;
   isStreaming?: boolean;
-  liked?:       boolean;
-  disliked?:    boolean;
+  liked?:      boolean;
+  disliked?:   boolean;
 }

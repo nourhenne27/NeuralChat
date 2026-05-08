@@ -21,8 +21,9 @@ public class ExportReportQueryHandler : IRequestHandler<ExportReportQuery, Expor
     public async Task<ExportReportDto> Handle(ExportReportQuery request, CancellationToken cancellationToken)
     {
         var users = await _sqlContext.ChatSessions
+            .Include(s => s.User)
             .Where(s => s.User != null)
-            .Select(s => s.User)
+            .Select(s => s.User!)
             .Distinct()
             .Select(u => new UserDto
             {
@@ -33,7 +34,9 @@ public class ExportReportQueryHandler : IRequestHandler<ExportReportQuery, Expor
             .ToListAsync(cancellationToken);
 
         var totalQuestions = await _sqlContext.ChatSessions
-            .CountAsync(s => s.User != null, cancellationToken);
+            .SelectMany(s => s.Messages)
+            .Where(m => m.Role == "user")
+            .CountAsync(cancellationToken);
 
         var totalDocuments = await _vectorContext.Documents
             .CountAsync(cancellationToken);
@@ -45,11 +48,12 @@ public class ExportReportQueryHandler : IRequestHandler<ExportReportQuery, Expor
 
         var recentActivity = await _sqlContext.ChatSessions
             .Include(s => s.User)
+            .Where(s => s.User != null)
             .OrderByDescending(s => s.CreatedAt)
             .Take(20)
             .Select(s => new ActivityItemDto
             {
-                Actor = s.User.Email,
+                Actor = s.User!.Email,
                 Action = "a démarré une session de chat",
                 OccurredAt = s.CreatedAt
             })

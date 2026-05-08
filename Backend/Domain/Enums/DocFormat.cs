@@ -4,5 +4,7 @@ public enum DocFormat
 {
     Pdf,
     Docx,
-    Txt
+    Txt,
+    Md
 }
+

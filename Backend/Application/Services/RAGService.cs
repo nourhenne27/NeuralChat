@@ -1,8 +1,7 @@
 ﻿using Domain.Interfaces;
 using Microsoft.Extensions.Options;
 using Domain.Entities;
-using System.Collections.Generic;
-using System.Linq;
+using Application.DTOs;
 using System.Text.Json;
 using System.Text;
 
@@ -17,27 +16,14 @@ public class RAGService
     private readonly IChatSessionRepository _chatSessionRepository;
     private readonly ChunkingOptions _chunkingOptions;
 
-    // Phrases que le LLM retourne quand il n'a pas trouvé la réponse
-    private static readonly string[] _noAnswerPhrases = new[]
-    {
-        "could not find",
-        "cannot find",
-        "not find",
-        "no information",
-        "not found",
-        "pas trouvé",
-        "aucune information",
-        "je n'ai pas",
-        "n'est pas mentionné",
-        "not mentioned",
-        "not available",
-        "not provided",
-        "not contain",
-        "does not contain",
-        "ne contient pas",
-        "not in the provided",
-        "not in the document"
-    };
+    private static readonly string[] _noAnswerPhrases =
+    [
+        "could not find", "cannot find", "not find", "no information",
+        "not found", "pas trouvé", "aucune information", "je n'ai pas",
+        "n'est pas mentionné", "not mentioned", "not available",
+        "not provided", "not contain", "does not contain",
+        "ne contient pas", "not in the provided", "not in the document"
+    ];
 
     public RAGService(
         IEmbeddingService embeddingService,
@@ -55,7 +41,7 @@ public class RAGService
         _chunkingOptions = chunkingOptions.Value;
     }
 
-    public async Task<(string Response, List<string> Sources)> GetResponseAsync(
+    public async Task<(string Response, List<SourceDto> Sources)> GetResponseAsync(
         string userQuestion, Guid sessionId)
     {
         var questionEmbedding = await _embeddingService.GenerateEmbeddingAsync(userQuestion);
@@ -63,7 +49,7 @@ public class RAGService
             questionEmbedding, 12, _chunkingOptions.SimilarityThreshold);
 
         if (!retrieved.Any())
-            return ("Je n'ai pas trouvé d'information pertinente.", new List<string>());
+            return ("Je n'ai pas trouvé d'information pertinente.", new List<SourceDto>());
 
         var finalResults = retrieved.Take(_chunkingOptions.TopK).ToList();
         var finalChunks = finalResults.Select(r => r.Chunk).ToList();
@@ -77,10 +63,23 @@ public class RAGService
         var prompt = _promptBuilder.BuildPrompt(userQuestion, finalChunks);
         var response = await _llmService.GenerateResponseAsync(prompt, history);
 
-        var sources = finalChunks
-            .Where(c => c.Document != null)
-            .Select(c => c.Document.Name ?? "Document inconnu")
-            .Distinct()
+        var sources = finalResults
+            .Where(r => r.Chunk.Document != null)
+            .GroupBy(r => r.Chunk.Document.Name)
+            .Select(g =>
+            {
+                var best = g.OrderByDescending(r => r.Score).First();
+                var excerpt = best.Chunk.Content.Length > 150
+                    ? best.Chunk.Content[..150] + "..."
+                    : best.Chunk.Content;
+                return new SourceDto
+                {
+                    DocumentTitle = g.Key ?? "Document inconnu",
+                    Excerpt = excerpt,
+                    Score = Math.Round(best.Score, 4)
+                };
+            })
+            .OrderByDescending(s => s.Score)
             .ToList();
 
         return (response, sources);
@@ -93,7 +92,6 @@ public class RAGService
         var retrieved = await _vectorStore.SearchAsync(
             questionEmbedding, 12, _chunkingOptions.SimilarityThreshold);
 
-        // Pas de résultats vectoriels → pas de sources
         if (!retrieved.Any())
         {
             yield return "Je n'ai pas trouvé d'information pertinente dans les documents disponibles.";
@@ -111,8 +109,6 @@ public class RAGService
             .ToList() ?? new List<(string, string)>();
 
         var prompt = _promptBuilder.BuildPrompt(userQuestion, finalChunks);
-
-        // ✅ Accumuler la réponse complète pour détecter "pas trouvé"
         var fullResponse = new StringBuilder();
 
         await foreach (var token in _llmService.GenerateResponseStreamAsync(prompt, history))
@@ -121,19 +117,18 @@ public class RAGService
             yield return token;
         }
 
-        // ✅ Vérifier si le LLM a répondu qu'il n'a pas trouvé
         var responseText = fullResponse.ToString().ToLowerInvariant();
-        bool llmDidNotFind = _noAnswerPhrases.Any(phrase =>
-            responseText.Contains(phrase.ToLowerInvariant()));
+        bool llmDidNotFind = _noAnswerPhrases.Any(p =>
+            responseText.Contains(p.ToLowerInvariant()));
 
-        // Si le LLM dit qu'il n'a pas trouvé → pas de sources
         if (llmDidNotFind)
         {
             yield return "[SOURCES_DATA][]";
             yield break;
         }
 
-        // Sinon → envoyer les sources pertinentes
+        // ✅ FIX : suppression du .Take(1) et du .Where redondant
+        // Les sources suivent les mêmes règles que GetResponseAsync (TopK résultats)
         var sourcesPayload = finalResults
             .Where(r => r.Chunk.Document != null)
             .GroupBy(r => r.Chunk.Document.Name)
@@ -143,21 +138,20 @@ public class RAGService
                 var excerpt = best.Chunk.Content.Length > 150
                     ? best.Chunk.Content[..150] + "..."
                     : best.Chunk.Content;
-                return new
+                return new SourceDto
                 {
-                    documentTitle = g.Key ?? "Document inconnu",
-                    excerpt,
-                    score = Math.Round(best.Score, 4)
+                    DocumentTitle = g.Key ?? "Document inconnu",
+                    Excerpt = excerpt,
+                    Score = Math.Round(best.Score, 4)
                 };
             })
-            .OrderByDescending(s => s.score)
-            .Where(s => s.score >= _chunkingOptions.SimilarityThreshold)
-            .Take(1)
+            .OrderByDescending(s => s.Score)
             .ToList();
 
         var sourcesJson = JsonSerializer.Serialize(sourcesPayload, new JsonSerializerOptions
         {
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
         yield return $"[SOURCES_DATA]{sourcesJson}";
     }

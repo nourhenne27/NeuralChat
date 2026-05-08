@@ -5,9 +5,28 @@
 
   <div class="navbar-right">
     <div class="user-pill">
-      <div class="user-avatar">
-        {{ currentUser.email[0].toUpperCase() }}
+
+      <!-- Avatar cliquable -->
+      <div class="user-avatar" (click)="openFilePicker()" title="Changer la photo">
+        <img *ngIf="avatarUrl" [src]="avatarUrl" class="avatar-img" alt="avatar" />
+        <span *ngIf="!avatarUrl">{{ currentUser.email[0].toUpperCase() }}</span>
+        <div class="avatar-overlay">
+          <span *ngIf="!avatarUrl">📷</span>
+          <span *ngIf="avatarUrl" class="avatar-overlay-actions">
+            <span title="Changer" style="cursor:pointer">📷</span>
+            <span title="Supprimer" style="cursor:pointer" (click)="removeAvatar($event)">🗑️</span>
+          </span>
+        </div>
       </div>
+
+      <!-- Input file caché -->
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        style="display:none"
+        (change)="onFileSelected($event)" />
+
       <div class="user-info">
         <span class="user-name">{{ currentUser.email }}</span>
         <span class="user-role-tag">{{ currentUser.role }}</span>

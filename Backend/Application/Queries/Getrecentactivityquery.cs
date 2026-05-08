@@ -22,32 +22,38 @@ public class GetRecentActivityQueryHandler : IRequestHandler<GetRecentActivityQu
     {
         var activities = new List<ActivityItemDto>();
 
+        // Sessions de chat
         var sessions = await _sqlContext.ChatSessions
             .Include(s => s.User)
+            .Where(s => s.User != null)
             .OrderByDescending(s => s.CreatedAt)
             .Take(request.Limit)
             .ToListAsync(cancellationToken);
 
         activities.AddRange(sessions.Select(s => new ActivityItemDto
         {
-            Actor = s.User.Email.Split('@')[0],
+            Actor = s.User!.Email.Split('@')[0],
             Action = "a démarré une session de chat",
             OccurredAt = s.CreatedAt
         }));
 
+        // Feedbacks — on utilise Message.CreatedAt car Feedback n'a pas de CreatedAt propre
         var feedbacks = await _sqlContext.Feedbacks
             .Include(f => f.User)
-            .OrderByDescending(f => f.Id)
+            .Include(f => f.Message)
+            .Where(f => f.User != null)
+            .OrderByDescending(f => f.Message.CreatedAt)
             .Take(request.Limit)
             .ToListAsync(cancellationToken);
 
         activities.AddRange(feedbacks.Select(f => new ActivityItemDto
         {
-            Actor = f.User.Email.Split('@')[0],
+            Actor = f.User!.Email.Split('@')[0],
             Action = f.Score >= 4 ? "a soumis un feedback positif" : "a soumis un feedback",
-            OccurredAt = DateTime.UtcNow
+            OccurredAt = f.Message?.CreatedAt ?? DateTime.UtcNow
         }));
 
+        // Documents indexés
         var documents = await _vectorContext.Documents
             .OrderByDescending(d => d.UploadedAt)
             .Take(request.Limit)
@@ -59,6 +65,7 @@ public class GetRecentActivityQueryHandler : IRequestHandler<GetRecentActivityQu
             Action = $"a indexé {d.Name}",
             OccurredAt = d.UploadedAt
         }));
+
         return activities
             .OrderByDescending(a => a.OccurredAt)
             .Take(request.Limit);

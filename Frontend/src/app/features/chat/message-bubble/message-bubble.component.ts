@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { marked } from 'marked';
-import { ChatMessage } from '../../../core/models/chat-message';
+import { ChatMessage, SourceDto } from '../../../core/models/chat-message';
 
 @Component({
   selector: 'app-message-bubble',
@@ -13,15 +12,23 @@ export class MessageBubbleComponent {
 
   showSources = false;
 
-  get parsedContent(): string {
-    if (this.message.role === 'assistant') {
-      return marked(this.message.content) as string;
-    }
-    return this.message.content;
-  }
-
   get hasSources(): boolean {
     return !!this.message.sources?.length;
+  }
+
+  getTitle(src: any): string {
+    return src?.documentTitle || src?.document_title || src?.title || src?.name || '';
+  }
+
+  uniqueSources(sources: SourceDto[] | undefined): any[] {
+    if (!sources?.length) return [];
+    const seen = new Set<string>();
+    return sources.filter(src => {
+      const title = this.getTitle(src);
+      if (!title || seen.has(title)) return false;
+      seen.add(title);
+      return true;
+    });
   }
 
   onFeedback(isPositive: boolean): void {

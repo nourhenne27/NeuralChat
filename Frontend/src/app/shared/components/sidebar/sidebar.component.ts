@@ -20,7 +20,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   sessions: ChatSessionDto[] = [];
   activeSessionId: string | null = null;
   isChatPage = false;
-  confirmDeleteId: string | null = null; // ✅
+
+  // Delete
+  confirmDeleteId: string | null = null;
+
+  // Rename
+  editingSessionId: string | null = null;
+  editingTitle     = '';
 
   private subs = new Subscription();
 
@@ -28,11 +34,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private chatState: ChatStateService,
-    private chatService: ChatService       // ✅
+    private chatService: ChatService
   ) { }
 
   ngOnInit(): void {
-    this.isAdmin = this.authService.isAdmin();
+    this.isAdmin = this.authService.isAdminOrManager();
 
     const url = this.router.url;
     this.isChatPage = url.includes('/chat');
@@ -67,11 +73,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   navigate(page: string): void {
     this.activePage = page;
-    const routes: Record<string, string> = { chat: '/chat', docs: '/documents', admin: '/admin' };
-    this.router.navigate([routes[page]]);
+    const routes: Record<string, string> = { chat: '/chat', docs: '/documents', admin: '/admin/dashboard' };
+    this.router.navigate([routes[page] ?? '/chat']);
   }
 
   selectSession(id: string): void {
+    if (this.editingSessionId === id) return; // Don't switch while editing
     this.router.navigate(['/chat']).then(() => {
       this.chatState.selectSession(id);
     });
@@ -83,7 +90,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ✅ Delete handlers
+  // ── Delete ────────────────────────────────────────────────
   onDeleteClick(event: MouseEvent, id: string): void {
     event.stopPropagation();
     this.confirmDeleteId = id;
@@ -98,20 +105,48 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const id = this.confirmDeleteId;
     this.confirmDeleteId = null;
 
-    console.log('🗑️ Deleting session:', id);
-
     this.chatService.deleteSession(id).subscribe({
       next: () => {
-        console.log('✅ Delete success');
         const updated = this.chatState.sessions$.getValue().filter(s => s.id !== id);
         this.chatState.setSessions(updated);
-        if (this.activeSessionId === id) {
-          this.chatState.triggerNewChat();
-        }
+        if (this.activeSessionId === id) this.chatState.triggerNewChat();
       },
-      error: (err) => {
-        console.error('❌ Delete error:', err);
-      }
+      error: (err) => console.error('Delete error:', err)
     });
+  }
+
+  // ── Rename ────────────────────────────────────────────────
+  startRename(event: MouseEvent, session: ChatSessionDto): void {
+    event.stopPropagation();
+    this.editingSessionId = session.id;
+    this.editingTitle     = session.title || '';
+  }
+
+  confirmRename(sessionId: string): void {
+    const title = this.editingTitle.trim();
+    if (!title) { this.cancelRename(); return; }
+
+    this.chatService.renameSession(sessionId, title).subscribe({
+      next: () => {
+        const updated = this.chatState.sessions$.getValue().map(s =>
+          s.id === sessionId ? { ...s, title } : s
+        );
+        this.chatState.setSessions(updated);
+      },
+      error: (err) => console.error('Rename error:', err)
+    });
+
+    this.editingSessionId = null;
+    this.editingTitle     = '';
+  }
+
+  cancelRename(): void {
+    this.editingSessionId = null;
+    this.editingTitle     = '';
+  }
+
+  onRenameKeydown(event: KeyboardEvent, sessionId: string): void {
+    if (event.key === 'Enter')  { event.preventDefault(); this.confirmRename(sessionId); }
+    if (event.key === 'Escape') { this.cancelRename(); }
   }
 }

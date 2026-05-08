@@ -2,26 +2,25 @@
 
   <div class="bubble">
 
-    <div class="bubble-content"
-         [innerHTML]="parsedContent"></div>
+    <div class="bubble-content">
+      <markdown *ngIf="message.role === 'assistant'" [data]="message.content"></markdown>
+      <span *ngIf="message.role === 'user'">{{ message.content }}</span>
+    </div>
 
     <!-- Sources panel -->
     <div class="msg-sources"
          *ngIf="message.role === 'assistant' && message.sources?.length">
-
       <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">
         Sources :
       </span>
-
-      <div class="source-chip"
-           *ngFor="let src of message.sources"
-           [title]="src.excerpt">
-        📎 {{ src.documentTitle }} · {{ (src.score * 100).toFixed(0) }}%
-      </div>
-
+      <ng-container *ngFor="let src of uniqueSources(message.sources)">
+        <div class="source-chip" *ngIf="getTitle(src) as title">
+          📎 {{ title }}
+        </div>
+      </ng-container>
     </div>
 
-    <!-- Footer feedback — connecté via EventEmitter -->
+    <!-- Footer feedback -->
     <div class="bubble-footer" *ngIf="message.role === 'assistant'">
       <div class="feedback-row">
         <button class="fb-btn"

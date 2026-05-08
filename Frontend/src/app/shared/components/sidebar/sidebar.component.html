@@ -60,9 +60,39 @@
       class="session-item"
       [class.active]="session.id === activeSessionId"
       (click)="selectSession(session.id)">
+
       <div class="session-dot" [class.active]="session.id === activeSessionId"></div>
-      <span class="session-title">{{ session.title || 'Nouvelle conversation' }}</span>
-      <button class="delete-btn" (click)="onDeleteClick($event, session.id)" title="Supprimer">✕</button>
+
+      <!-- Mode édition -->
+      <input
+        *ngIf="editingSessionId === session.id"
+        class="session-rename-input"
+        [(ngModel)]="editingTitle"
+        (keydown)="onRenameKeydown($event, session.id)"
+        (blur)="confirmRename(session.id)"
+        (click)="$event.stopPropagation()"
+        autofocus />
+
+      <!-- Mode normal -->
+      <span
+        *ngIf="editingSessionId !== session.id"
+        class="session-title"
+        (dblclick)="startRename($event, session)">
+        {{ session.title || 'Nouvelle conversation' }}
+      </span>
+
+      <!-- Boutons actions (masqués pendant l'édition) -->
+      <ng-container *ngIf="editingSessionId !== session.id">
+        <button
+          class="rename-btn"
+          title="Renommer"
+          (click)="startRename($event, session)">✏️</button>
+        <button
+          class="delete-btn"
+          title="Supprimer"
+          (click)="onDeleteClick($event, session.id)">✕</button>
+      </ng-container>
+
     </div>
   </div>
 
@@ -79,7 +109,7 @@
 
 </aside>
 
-<!-- ✅ Modal EN DEHORS du <aside> pour échapper au overflow:hidden -->
+<!-- Modal suppression EN DEHORS du <aside> -->
 <div class="modal-backdrop" *ngIf="confirmDeleteId" (click)="cancelDelete()">
   <div class="modal-dialog" (click)="$event.stopPropagation()">
     <div class="modal-icon">🗑️</div>

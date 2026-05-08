@@ -1,8 +1,6 @@
 ﻿using Domain.Interfaces;
 using Infrastructure.FileProcessing;
 
-namespace Infrastructure.FileProcessing;
-
 public class FileTextExtractorFactory : IFileTextExtractor
 {
     private readonly PdfExtractor _pdfExtractor;
@@ -28,8 +26,9 @@ public class FileTextExtractorFactory : IFileTextExtractor
             "pdf" => _pdfExtractor.ExtractTextAsync(fileStream, fileName),
             "docx" => _wordExtractor.ExtractTextAsync(fileStream, fileName),
             "txt" => _textExtractor.ExtractTextAsync(fileStream, fileName),
+            "md" => _textExtractor.ExtractTextAsync(fileStream, fileName),
             _ => throw new NotSupportedException(
-                $"Format '{ext}' non supporté. Formats acceptés : pdf, docx, txt.")
+                $"Format '{ext}' non supporté. Formats acceptés : pdf, docx, txt, md.")
         };
     }
 }

@@ -17,59 +17,63 @@
 
   <!-- Messages -->
   <div class="messages-scroll" #scrollContainer *ngIf="messages.length > 0 || isLoading">
-    <div *ngFor="let msg of messages; trackBy: trackByIndex"
-         class="msg-wrap"
-         [class.user]="msg.role === 'user'">
 
-      <div class="msg-avatar"
-           [class.ai]="msg.role === 'assistant'"
-           [class.user]="msg.role === 'user'">
-        {{ msg.role === 'user' ? '👤' : '🧠' }}
-      </div>
+    <ng-container *ngFor="let msg of messages; trackBy: trackByIndex">
+      <div class="msg-wrap"
+           [class.user]="msg.role === 'user'"
+           [class.bot]="msg.role === 'assistant'"
+           *ngIf="msg.role === 'user' || msg.content || !msg.isStreaming">
 
-      <div class="msg-bubble">
-        <div *ngIf="msg.role === 'assistant'">
-          <markdown [data]="msg.content"></markdown>
-        </div>
-        <div *ngIf="msg.role === 'user'">{{ msg.content }}</div>
+        <div class="msg-avatar" *ngIf="msg.role === 'assistant'">🧠</div>
 
-        <div class="msg-sources" *ngIf="msg.role === 'assistant' && msg.sources?.length">
-          <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">
-            Sources :
-          </span>
-          <div class="source-chip" *ngFor="let src of msg.sources">
-            📎 {{ src.documentTitle }} · {{ (src.score * 100).toFixed(0) }}%
+        <div class="msg-col">
+          <div class="msg-bubble">
+            <div *ngIf="msg.role === 'assistant'">
+              <markdown [data]="msg.content"></markdown>
+            </div>
+            <div *ngIf="msg.role === 'user'">{{ msg.content }}</div>
+          </div>
+
+<div class="msg-sources" *ngIf="msg.role === 'assistant' && msg.sources && msg.sources.length > 0">
+  <span class="sources-label">Sources :</span>
+  <div class="source-chip">
+    📎 {{ msg.sources![0].documentTitle }}
+  </div>
+</div>
+
+          <div class="msg-meta" *ngIf="msg.role === 'assistant' && !msg.isStreaming">
+            <div class="feedback-row">
+              <button class="fb-btn"
+                      [class.liked]="msg.liked"
+                      [disabled]="msg.liked || msg.disliked"
+                      (click)="openFeedbackModal(msg, true)">👍</button>
+              <button class="fb-btn"
+                      [class.disliked]="msg.disliked"
+                      [disabled]="msg.liked || msg.disliked"
+                      (click)="openFeedbackModal(msg, false)">👎</button>
+            </div>
+            <span *ngIf="msg.liked"    class="fb-thanks">✓ Merci !</span>
+            <span *ngIf="msg.disliked" class="fb-thanks">✓ Noté !</span>
           </div>
         </div>
 
-        <div class="msg-meta" *ngIf="msg.role === 'assistant'">
-          <div class="feedback-row">
-            <button class="fb-btn"
-                    [class.liked]="msg.liked"
-                    [disabled]="msg.liked || msg.disliked"
-                    (click)="openFeedbackModal(msg, true)">👍</button>
-            <button class="fb-btn"
-                    [class.disliked]="msg.disliked"
-                    [disabled]="msg.liked || msg.disliked"
-                    (click)="openFeedbackModal(msg, false)">👎</button>
-          </div>
-          <span *ngIf="msg.liked"    style="font-size:11px;color:#6c63ff;margin-left:8px;">✓ Merci !</span>
-          <span *ngIf="msg.disliked" style="font-size:11px;color:#6c63ff;margin-left:8px;">✓ Noté !</span>
-        </div>
       </div>
-    </div>
+    </ng-container>
 
     <!-- Typing indicator -->
-    <div class="msg-wrap" *ngIf="isLoading">
-      <div class="msg-avatar ai">🧠</div>
-      <div class="msg-bubble">
-        <div class="typing-indicator">
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
+    <div class="msg-wrap bot" *ngIf="isLoading">
+      <div class="msg-avatar">🧠</div>
+      <div class="msg-col">
+        <div class="msg-bubble typing-bubble">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- Input -->
@@ -86,7 +90,7 @@
               (click)="sendMessage()"
               [disabled]="!inputText.trim() || isLoading">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <path d="M14 8L2 2l2.5 6L2 14l12-6z" fill="black" stroke="black" stroke-width="0.5" stroke-linejoin="round"/>
+          <path d="M14 8L2 2l2.5 6L2 14l12-6z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
         </svg>
       </button>
     </div>

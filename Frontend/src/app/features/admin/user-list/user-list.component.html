@@ -15,11 +15,11 @@
       <td>{{ user.role }}</td>
       <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
       <td>
-        <select [value]="user.role" (change)="changeRole(user.id, $event)">
-          <option value="User">User</option>
-          <option value="Manager">Manager</option>
-          <option value="Admin">Admin</option>
-        </select>
+    <select [(ngModel)]="user.role" (ngModelChange)="changeRole(user.id, $event)">
+       <option value="User">User</option>
+      <option value="Manager">Manager</option>
+       <option value="Admin">Admin</option>
+    </select>
       </td>
     </tr>
   </tbody>

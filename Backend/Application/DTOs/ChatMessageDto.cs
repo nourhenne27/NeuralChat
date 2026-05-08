@@ -4,7 +4,8 @@ public class ChatMessageDto
 {
     public Guid Id { get; set; }
     public Guid SessionId { get; set; }
-    public string Role { get; set; } = string.Empty;   // "user" | "assistant"
+    public string Role { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }   // ← ADD THIS (maps from ChatMessage.Timestamp)
+    public DateTime CreatedAt { get; set; }
+    public List<SourceDto> Sources { get; set; } = new();
 }

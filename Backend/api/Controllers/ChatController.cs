@@ -109,6 +109,21 @@ public class ChatController : ControllerBase
         return Ok(result);
     }
 
+
+    // ===================== RENAME SESSION =====================
+    [HttpPatch("session/{sessionId:guid}/title")]
+    public async Task<IActionResult> RenameSession(Guid sessionId, [FromBody] RenameSessionRequest request)
+    {
+        if (!_currentUserService.IsAuthenticated)
+            return Unauthorized("Utilisateur non authentifié");
+
+        if (string.IsNullOrWhiteSpace(request.Title))
+            return BadRequest("Le titre ne peut pas être vide.");
+
+        await _mediator.Send(new RenameSessionCommand(sessionId, request.Title));
+        return NoContent();
+    }
+
     // ===================== GET USER SESSIONS =====================
     [HttpGet("sessions")]
     public async Task<IActionResult> GetUserSessions()
@@ -120,3 +135,5 @@ public class ChatController : ControllerBase
         return Ok(result);
     }
 }
+
+public record RenameSessionRequest(string Title);

@@ -2,12 +2,8 @@
 
 public class ChatResponseDto
 {
-    // Réponse du modèle IA
     public string Message { get; set; } = string.Empty;
-
-    // Sources utilisées (documents, chunks, etc.)
-    public List<string> Sources { get; set; } = new();
-
-    // Date de génération de la réponse
+    public List<SourceDto> Sources { get; set; } = new();
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public Guid SessionId { get; set; }
 }

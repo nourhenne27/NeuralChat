@@ -12,7 +12,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class AdminService {
 
-  private readonly base = `${environment.apiUrl}/admin`;
+  private readonly base = `${environment.apiUrl}/Admin`;
 
   constructor(private http: HttpClient) {}
 

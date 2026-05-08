@@ -15,20 +15,33 @@ export class UserListComponent implements OnInit {
 
   ngOnInit(): void {
     this.adminService.getAllUsers().subscribe({
-      next: (users) => this.users = users,
+      next: (users) => {
+        this.users = users.map(u => ({
+          ...u,
+          role: this.normalizeRole(u.role)
+        }));
+      },
       error: (err: Error) => this.error = err.message
     });
   }
 
-  // ✅ Utilise AdminService (PUT) au lieu de HttpClient direct (PATCH)
-changeRole(userId: string, event: Event): void {
-  const role = (event.target as HTMLSelectElement).value;
-  this.adminService.updateUserRole(userId, role as 'User' | 'Manager' | 'Admin').subscribe({
-      next: () => {
-        const user = this.users.find(u => u.id === userId);
-        if (user) user.role = role;
-      },
-      error: (err: Error) => this.error = err.message
+  private normalizeRole(role: any): string {
+    if (typeof role === 'string') return role;
+    const map: Record<number, string> = { 0: 'Admin', 1: 'Manager', 2: 'User' };
+    return map[role] ?? 'User';
+  }
+
+  changeRole(userId: string, role: string): void {
+    this.adminService.updateUserRole(userId, role as 'User' | 'Manager' | 'Admin').subscribe({
+      next: () => {},
+      error: (err: Error) => {
+        this.error = err.message;
+        this.adminService.getAllUsers().subscribe({
+          next: (users) => {
+            this.users = users.map(u => ({ ...u, role: this.normalizeRole(u.role) }));
+          }
+        });
+      }
     });
   }
 }

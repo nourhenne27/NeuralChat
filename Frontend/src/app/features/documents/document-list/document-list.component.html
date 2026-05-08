@@ -1,11 +1,11 @@
 <div class="docs-page fade-in">
 
-  
   <div class="upload-zone"
     [class.dragover]="isDragOver"
     [class.uploading]="isUploading"
-    (click)="triggerFileInput()"
-    (dragover)="onDragOver($event)"
+    [class.disabled]="!canUpload"
+    (click)="canUpload && triggerFileInput()"
+    (dragover)="canUpload && onDragOver($event)"
     (dragleave)="onDragLeave()"
     (drop)="onDrop($event)">
 
@@ -37,7 +37,6 @@
       (change)="onFileSelected($event)"/>
   </div>
 
-
   <div class="section-header">
     <h2 class="section-title">
       Documents indexés
@@ -46,14 +45,12 @@
     <button class="btn-sm btn-ghost" (click)="loadDocuments()">↻ Actualiser</button>
   </div>
 
-  
   <div class="docs-table">
 
     <div class="docs-table-header">
-      <div>Fichier</div>
-      <div>Taille</div>
-      <div>Indexé le</div>
-      <div>Statut</div>
+      <div class="col-fichier">Fichier</div>
+      <div class="col-date">Indexé le</div>
+      <div class="col-status">Statut</div>
       <div class="col-actions">Actions</div>
     </div>
 
@@ -66,35 +63,27 @@
       Chargement…
     </div>
 
-   
     <div class="doc-row" *ngFor="let doc of documents">
 
-      <div class="doc-name-cell">
+      <div class="col-fichier doc-name-cell">
         <span class="doc-ext">{{ doc.ext }}</span>
-        <div>
-          <div class="doc-filename">{{ doc.name }}</div>
-         
-        </div>
+        <div class="doc-filename">{{ doc.name }}</div>
       </div>
 
-    
+      <div class="col-date doc-date">{{ doc.date }}</div>
 
-      <div class="doc-date">{{ doc.date }}</div>
-
-      <div>
+      <div class="col-status">
         <span class="status-badge" [ngClass]="getStatusClass(doc.status)">
           {{ getStatusLabel(doc.status) }}
         </span>
       </div>
 
-      <div class="doc-actions">
-     
+      <div class="col-actions doc-actions">
         <button class="icon-btn danger" (click)="deleteDocument(doc.id)" title="Supprimer">✕</button>
       </div>
 
     </div>
 
-   
     <div class="table-empty" *ngIf="!isLoading && documents.length === 0">
       Aucun document indexé. Uploadez votre premier document ci-dessus.
     </div>

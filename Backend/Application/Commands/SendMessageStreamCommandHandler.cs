@@ -36,7 +36,6 @@ public class SendMessageStreamCommandHandler
         var userId = _currentUserService.UserId;
         Guid sessionId;
 
-        // ===================== CRÉATION DE SESSION SI NÉCESSAIRE =====================
         if (request.SessionId == null || request.SessionId == Guid.Empty)
         {
             var title = request.Message.Length > 60
@@ -60,7 +59,6 @@ public class SendMessageStreamCommandHandler
             sessionId = request.SessionId.Value;
         }
 
-        // ===================== STREAMING =====================
         var fullResponse = new StringBuilder();
         var sourcesRaw = string.Empty;
 
@@ -77,13 +75,11 @@ public class SendMessageStreamCommandHandler
             yield return token;
         }
 
-        // ===================== ENVOI DES SOURCES AU FRONTEND =====================
         if (!string.IsNullOrEmpty(sourcesRaw))
         {
             yield return $"[SOURCES]{sourcesRaw}";
         }
 
-        // ===================== SAUVEGARDE EN BASE =====================
         var userMessage = new ChatMessage
         {
             Id = Guid.NewGuid(),
@@ -99,12 +95,12 @@ public class SendMessageStreamCommandHandler
             SessionId = sessionId,
             Role = "assistant",
             Content = fullResponse.ToString(),
-            CreatedAt = DateTime.UtcNow.AddMilliseconds(1)
+            CreatedAt = DateTime.UtcNow.AddMilliseconds(1),
+            SourcesJson = !string.IsNullOrEmpty(sourcesRaw) ? sourcesRaw : null
         };
 
         await _chatSessionRepository.AddMessagesAsync(sessionId, userMessage, assistantMessage);
 
-        // ✅ Envoyer l'ID du message assistant au frontend pour le feedback
         yield return $"[MESSAGE_ID:{assistantMessage.Id}]";
     }
-}
+} 

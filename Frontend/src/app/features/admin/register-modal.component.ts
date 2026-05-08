@@ -13,61 +13,56 @@ export interface RegisterModalResult {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="overlay" (click)="handleOverlayClick()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal" (click)="$event.stopPropagation()">
 
-        <div class="modal-header">
-          <h3>👤 Créer un utilisateur</h3>
-          <button class="btn-close" (click)="close()">✕</button>
-        </div>
+      <div class="modal-header">
+        <h3>👤 Créer un utilisateur</h3>
+        <button class="btn-close" (click)="close()">✕</button>
+      </div>
 
-        <div class="modal-body">
-          <label>Email</label>
-          <input [(ngModel)]="form.email" placeholder="exemple@email.com" type="email" />
+      <div class="modal-body">
+        <label>Email</label>
+        <input [(ngModel)]="form.email" placeholder="exemple@email.com" type="email" />
 
-          <label>Mot de passe</label>
-          <input [(ngModel)]="form.password" placeholder="Min. 6 caractères" type="password" />
+        <label>Mot de passe</label>
+        <input [(ngModel)]="form.password" placeholder="Min. 6 caractères" type="password" />
 
-          <label>Confirmer le mot de passe</label>
-          <input [(ngModel)]="form.confirm" placeholder="Répéter le mot de passe" type="password" />
+        <label>Confirmer le mot de passe</label>
+        <input [(ngModel)]="form.confirm" placeholder="Répéter le mot de passe" type="password" />
 
-          <label>Rôle</label>
-          <select [(ngModel)]="form.role">
-            <option value="User">User</option>
-            <option value="Manager">Manager</option>
-            <option value="Admin">Admin</option>
-          </select>
-        </div>
+        <label>Rôle</label>
+        <select [(ngModel)]="form.role">
+          <option value="User">User</option>
+          <option value="Manager">Manager</option>
+          <option value="Admin">Admin</option>
+        </select>
 
-        <div class="modal-footer">
-          <button class="btn-cancel" (click)="close()">Annuler</button>
-          <button class="btn-submit" (click)="submit()" [disabled]="loading">
-            {{ loading ? 'Création...' : "Créer l'utilisateur" }}
-          </button>
-        </div>
+        <div *ngIf="errorMsg" class="error-msg">⚠ {{ errorMsg }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="close()">Annuler</button>
+        <button class="btn-submit" (click)="submit()" [disabled]="loading">
+          {{ loading ? 'Création...' : "Créer l'utilisateur" }}
+        </button>
       </div>
     </div>
   `,
-  styles: [`
-    /* ✅ FIX : background retiré ici — c'est le portal div dans modal.service.ts qui gère le fond */
-    .overlay {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-    }
+styles: [`
+  :host {
+    display: block;   /* ← était "flex" avec width/height 100% */
+  }
 
-    .modal {
-      background: #1a1e35;
-      padding: 28px;
-      border-radius: 14px;
-      width: 440px;
-      max-width: 95vw;
-      color: white;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
-    }
+  .modal {
+    background: #1a1e35;
+    padding: 28px;
+    border-radius: 14px;
+    width: 440px;
+    max-width: 95vw;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  }
 
     .modal-header {
       display: flex;
@@ -137,6 +132,16 @@ export interface RegisterModalResult {
       border-color: rgba(0,212,255,0.4);
     }
 
+    .error-msg {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: rgba(255, 94, 122, 0.1);
+      border: 1px solid rgba(255, 94, 122, 0.3);
+      border-radius: 8px;
+      color: #ff5e7a;
+      font-size: 13px;
+    }
+
     .modal-footer {
       margin-top: 24px;
       display: flex;
@@ -187,6 +192,7 @@ export class RegisterModalComponent {
   onSubmit!: (data: RegisterModalResult) => void;
   onClose!: () => void;
   loading = false;
+  errorMsg = '';
 
   form = {
     email: '',
@@ -196,17 +202,22 @@ export class RegisterModalComponent {
   };
 
   submit() {
-    if (!this.form.email || this.form.password.length < 6) {
-      alert('Email et mot de passe (min 6 caractères) requis');
+    this.errorMsg = '';
+
+    if (!this.form.email) {
+      this.errorMsg = 'L\'email est requis.';
+      return;
+    }
+    if (this.form.password.length < 6) {
+      this.errorMsg = 'Le mot de passe doit contenir au moins 6 caractères.';
       return;
     }
     if (this.form.password !== this.form.confirm) {
-      alert('Les mots de passe ne correspondent pas');
+      this.errorMsg = 'Les mots de passe ne correspondent pas.';
       return;
     }
 
     this.loading = true;
-
     this.onSubmit({
       email: this.form.email.trim().toLowerCase(),
       password: this.form.password,
@@ -214,11 +225,7 @@ export class RegisterModalComponent {
     });
   }
 
-  close() {
-    this.onClose?.();
-  }
-
-  handleOverlayClick() {
-    this.close();
-  }
+close() {
+  this.onClose?.();
+}
 }

@@ -20,9 +20,10 @@ public class GetAdminStatsQueryHandler : IRequestHandler<GetAdminStatsQuery, Adm
 
     public async Task<AdminStatsDto> Handle(GetAdminStatsQuery request, CancellationToken cancellationToken)
     {
-        var totalQuestions = await _sqlContext.ChatSessions
-            .SelectMany(s => s.Messages)
-            .Where(m => m.Role == "user")
+        // Compte uniquement les messages dont la session existe encore
+        var totalQuestions = await _sqlContext.ChatMessages
+            .Where(m => m.Role == "user"
+                     && _sqlContext.ChatSessions.Any(s => s.Id == m.SessionId))
             .CountAsync(cancellationToken);
 
         var totalDocuments = await _vectorContext.Documents
@@ -34,7 +35,9 @@ public class GetAdminStatsQueryHandler : IRequestHandler<GetAdminStatsQuery, Adm
         var averageScore = await _sqlContext.Feedbacks
             .AverageAsync(f => (double?)f.Score, cancellationToken) ?? 0.0;
 
-        var averageConfidenceScore = Math.Round(averageScore / 5.0 * 100, 1);
+        var averageConfidenceScore = averageScore > 0
+            ? Math.Round(averageScore / 5.0 * 100, 1)
+            : 0.0;
 
         return new AdminStatsDto
         {

@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Security.Claims;
 using Api.Middleware;
 using Infrastructure;
@@ -24,6 +25,9 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        // Force UTC 'Z' suffix sur toutes les dates → le navigateur convertit en heure locale
+        options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
     });
 
 // ====================== Upload Size Limits ======================
@@ -87,7 +91,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtOptions["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtOptions["SecretKey"]!)),
-            ClockSkew = TimeSpan.Zero,
+            ClockSkew = TimeSpan.FromSeconds(30),
             RoleClaimType = ClaimTypes.Role
         };
 
@@ -141,8 +145,6 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // ====================== Middleware Pipeline ======================
-
-// ✅ Swagger uniquement en développement
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -161,3 +163,17 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Convertisseur qui s'assure que les DateTime UTC sont sérialisées avec le suffixe 'Z'
+// afin que le navigateur les affiche en heure locale automatiquement.
+public class UtcDateTimeConverter : JsonConverter<DateTime>
+{
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => DateTime.SpecifyKind(reader.GetDateTime(), DateTimeKind.Utc);
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
+        writer.WriteStringValue(utc.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+    }
+}

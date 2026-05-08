@@ -1,11 +1,11 @@
 import {
-  Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked
+  Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { ChatService }      from '../../../core/services/chat.service';
 import { ChatStateService } from '../../../core/services/chat-state.service';
-import { ChatMessage, ChatSessionDto } from '../../../core/models/chat-message';
+import { ChatMessage, ChatSessionDto, SourceDto } from '../../../core/models/chat-message';
 import { DocumentService } from '../../../core/services/document.service';
 import { FeedbackService } from '../../../core/services/feedback.service';
 import { FeedbackResult }  from '../feedback-modal/feedback-modal.component';
@@ -32,15 +32,17 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   feedbackIsPositive = true;
   pendingFeedbackMsg: ChatMessage | null = null;
 
-  private streamSub?:   Subscription;
-  private subs =        new Subscription();
+  private streamSub?:    Subscription;
+  private subs =         new Subscription();
   private shouldScroll = false;
+  private isStreaming =  false;
 
   constructor(
     private chatService:     ChatService,
     private chatState:       ChatStateService,
     private documentService: DocumentService,
-    private feedbackService: FeedbackService
+    private feedbackService: FeedbackService,
+    private cdr:             ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -48,15 +50,16 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.loadDocumentsCount();
     this.loadSessions(true);
 
-    // ✅ Écoute session sélectionnée depuis le sidebar
     this.subs.add(
       this.chatState.sessionId$
         .pipe(distinctUntilChanged())
         .subscribe((id: string | null) => {
           if (id === null) {
             this.resetChat();
-          } else if (id !== this.sessionId) {
+          } else if (id !== this.sessionId && !this.isStreaming) {
             this.loadSession(id);
+          } else if (id !== this.sessionId && this.isStreaming) {
+            this.sessionId = id;
           }
         })
     );
@@ -74,8 +77,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     }
   }
 
-  // ── Sessions ──────────────────────────────────────────────────
-
   loadSessions(autoLoadLast = false): void {
     this.chatService.getUserSessions().subscribe({
       next: res => {
@@ -86,7 +87,24 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
         this.chatState.setSessions(sorted);
 
         if (autoLoadLast && sorted.length > 0 && !this.sessionId) {
-          this.chatState.setSessionId(sorted[0].id);
+          const first = sorted[0];
+          this.sessionId = first.id;
+          this.messages = first.messages
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+            .map(m => {
+              const fb = this.restoreFeedback(m.id);
+              return {
+                role:      m.role,
+                content:   m.content,
+                timestamp: new Date(m.createdAt),
+                messageId: m.id,
+                sources:   this.normalizeSources(m.sources),
+                liked:     fb.liked,
+                disliked:  fb.disliked
+              };
+            });
+          this.shouldScroll = true;
+          this.chatState.sessionId$.next(first.id);
         }
       },
       error: () => this.chatState.setSessions([])
@@ -95,28 +113,36 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
   resetChat(): void {
     this.streamSub?.unsubscribe();
-    this.isLoading = false;
-    this.messages  = [];
-    this.sessionId = null;
-    this.error     = '';
-    this.inputText = '';
+    this.isLoading   = false;
+    this.isStreaming  = false;
+    this.messages    = [];
+    this.sessionId   = null;
+    this.error       = '';
+    this.inputText   = '';
   }
 
   loadSession(id: string): void {
     this.streamSub?.unsubscribe();
-    this.isLoading = false;
-    this.sessionId = id;
-    this.error     = '';
+    this.isLoading  = false;
+    this.isStreaming = false;
+    this.sessionId  = id;
+    this.error      = '';
+    this.messages   = [];
 
     this.chatService.getHistory(id).subscribe({
       next: res => {
-        this.messages = res.map(m => ({
-          role:      m.role,
-          content:   m.content,
-          timestamp: new Date(m.createdAt),
-          messageId: m.id,
-          sources:   []
-        }));
+        this.messages = res.map(m => {
+          const fb = this.restoreFeedback(m.id);
+          return {
+            role:      m.role,
+            content:   m.content,
+            timestamp: new Date(m.createdAt),
+            messageId: m.id,
+            sources:   this.normalizeSources(m.sources),
+            liked:     fb.liked,
+            disliked:  fb.disliked
+          };
+        });
         this.shouldScroll = true;
       },
       error: () => {
@@ -126,23 +152,23 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     });
   }
 
-  // ── Send message ──────────────────────────────────────────────
-
   sendMessage(question?: string): void {
     const text = (question ?? this.inputText).trim();
     if (!text || this.isLoading) return;
 
-    this.inputText = '';
-    this.isLoading = true;
-    this.error     = '';
+    this.inputText   = '';
+    this.isLoading   = true;
+    this.isStreaming  = true;
+    this.error       = '';
 
     const firstMessage = text;
     this.messages.push({ role: 'user', content: text, timestamp: new Date() });
 
     const assistantMsg: ChatMessage = {
-      role: 'assistant', content: '', timestamp: new Date(), sources: [], isStreaming: true
+      role: 'assistant', content: '', timestamp: new Date(), sources: undefined, isStreaming: true
     };
     this.messages.push(assistantMsg);
+    this.messages = [...this.messages];
     this.shouldScroll = true;
 
     this.streamSub?.unsubscribe();
@@ -153,7 +179,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           if (token.startsWith('[SESSION:')) {
             const newId = token.slice(9, -1);
             this.sessionId = newId;
-            this.chatState.setSessionId(newId);
             const currentSessions = this.chatState.sessions$.getValue();
             this.chatState.setSessions([
               { id: newId, title: firstMessage.slice(0, 40), createdAt: new Date().toISOString(), messages: [] },
@@ -163,9 +188,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           }
           if (token.startsWith('[SOURCES]')) {
             try {
-              assistantMsg.sources = JSON.parse(token.slice(9));
-              if (assistantMsg.sources?.length) assistantMsg.confidence = assistantMsg.sources[0].score;
+              const parsed: any[] = JSON.parse(token.slice(9));
+              assistantMsg.sources = this.normalizeSources(parsed);
             } catch {}
+            this.messages = [...this.messages];
+            this.cdr.detectChanges();
             return;
           }
           if (token.startsWith('[MESSAGE_ID:')) {
@@ -173,24 +200,35 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
             return;
           }
           assistantMsg.content += token;
+          this.messages = [...this.messages];
           this.shouldScroll = true;
+          this.cdr.detectChanges();
         },
         error: (err: Error) => {
           assistantMsg.isStreaming = false;
           assistantMsg.content += assistantMsg.content ? '\n\n_Erreur._' : '_Erreur._';
-          this.error     = err.message;
-          this.isLoading = false;
+          this.messages    = [...this.messages];
+          this.error       = err.message;
+          this.isLoading   = false;
+          this.isStreaming  = false;
         },
         complete: () => {
           assistantMsg.isStreaming = false;
-          this.isLoading = false;
-          this.loadSessions();
+          this.messages    = [...this.messages];
+          this.isLoading   = false;
+          this.isStreaming  = false;
+          this.chatService.getUserSessions().subscribe({
+            next: res => {
+              const sorted = res
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 20);
+              this.chatState.setSessions(sorted);
+            }
+          });
           this.shouldScroll = true;
         }
       });
   }
-
-  // ── Feedback ──────────────────────────────────────────────────
 
   openFeedbackModal(msg: ChatMessage, isPositive: boolean): void {
     if (msg.liked || msg.disliked) return;
@@ -204,19 +242,18 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     if (!msg || !msg.messageId) { this.showFeedbackModal = false; return; }
     msg.liked    = this.feedbackIsPositive;
     msg.disliked = !this.feedbackIsPositive;
+    this.saveFeedback(msg.messageId!, this.feedbackIsPositive);
     this.showFeedbackModal  = false;
     this.pendingFeedbackMsg = null;
     this.feedbackService.submitFeedback({
       messageId: msg.messageId, score: result.score, comment: result.comment
-    }).subscribe({ error: () => { msg.liked = false; msg.disliked = false; } });
+    }).subscribe({ error: () => { msg.liked = false; msg.disliked = false; try { localStorage.removeItem(this.feedbackKey(msg.messageId!)); } catch {} } });
   }
 
   onFeedbackCancelled(): void {
     this.showFeedbackModal  = false;
     this.pendingFeedbackMsg = null;
   }
-
-  // ── Helpers ───────────────────────────────────────────────────
 
   onKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); }
@@ -233,6 +270,43 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
       next:  docs => this.documentsCount = docs.length,
       error: ()   => this.documentsCount = 0
     });
+  }
+
+private normalizeSources(sources: any[] | undefined): SourceDto[] {
+    if (!sources?.length) return [];
+    const seen = new Set<string>();
+    return sources
+      .map((s: any) => ({
+        documentTitle: s.documentTitle ?? s.DocumentTitle ?? s.title ?? s.name ?? '',
+        excerpt:       s.excerpt       ?? s.Excerpt       ?? '',
+        score:         s.score         ?? s.Score         ?? 0
+      }))
+      .sort((a, b) => b.score - a.score)
+      .filter(s => {
+        if (!s.documentTitle || seen.has(s.documentTitle)) return false;
+        seen.add(s.documentTitle);
+        return true;
+      })
+      .slice(0, 1);
+  }
+
+
+  // ── Feedback persistence (localStorage) ──────────────────
+  private feedbackKey(messageId: string): string {
+    return `feedback_${messageId}`;
+  }
+
+  private saveFeedback(messageId: string, liked: boolean): void {
+    try { localStorage.setItem(this.feedbackKey(messageId), liked ? '1' : '0'); } catch {}
+  }
+
+  private restoreFeedback(messageId: string | undefined): { liked: boolean; disliked: boolean } {
+    if (!messageId) return { liked: false, disliked: false };
+    try {
+      const val = localStorage.getItem(this.feedbackKey(messageId));
+      if (val === null) return { liked: false, disliked: false };
+      return val === '1' ? { liked: true, disliked: false } : { liked: false, disliked: true };
+    } catch { return { liked: false, disliked: false }; }
   }
 
   private scrollToBottom(): void {
