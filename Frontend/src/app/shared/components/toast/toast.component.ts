@@ -1,5 +1,5 @@
-
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '../../../core/services/toast.service';
 
 export interface ToastData {
@@ -11,42 +11,67 @@ export interface ToastData {
 
 @Component({
   selector: 'app-toast',
-  template: `
-    <div class="toast" [class.show]="visible" [ngClass]="typeClass">
-      <div class="toast-icon">{{ data?.icon }}</div>
-      <div class="toast-message">{{ data?.message }}</div>
-    </div>
-  `,
+  templateUrl: './toast.component.html',
   styleUrls: ['./toast.component.scss']
 })
-export class ToastComponent implements OnInit {
+export class ToastComponent implements OnInit, OnDestroy {
 
   visible = false;
   data: ToastData | null = null;
 
+  // ✅ Pour cleanup des subscriptions
+  private destroy$ = new Subject<void>();
+
+  // ✅ Pour gérer le timeout actif
+  private hideTimer?: ReturnType<typeof setTimeout>;
+
   constructor(private toastService: ToastService) {}
 
   ngOnInit(): void {
-    this.toastService.toastState$.subscribe((toast: ToastData | null) => {
-      if (!toast) return;
+    this.toastService.toastState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((toast: ToastData | null) => {
 
-      this.data = toast;
-      this.visible = true;
+        if (!toast) return;
 
-      const duration = toast.duration ?? 3000;
+        // ✅ Annuler l'ancien timer si un nouveau toast arrive
+        clearTimeout(this.hideTimer);
 
-      setTimeout(() => {
-        this.visible = false;
-      }, duration);
-    });
+        this.data = toast;
+        this.visible = true;
+
+        const duration = toast.duration ?? 3000;
+
+        // ✅ Sauvegarder le nouveau timer
+        this.hideTimer = setTimeout(() => {
+          this.visible = false;
+        }, duration);
+      });
+  }
+
+  ngOnDestroy(): void {
+
+    // ✅ Cleanup timer
+    clearTimeout(this.hideTimer);
+
+    // ✅ Cleanup subscription
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get typeClass(): string {
     switch (this.data?.type) {
-      case 'success': return 'toast-success';
-      case 'error': return 'toast-error';
-      case 'info': return 'toast-info';
-      default: return 'toast-success';
+      case 'success':
+        return 'toast-success';
+
+      case 'error':
+        return 'toast-error';
+
+      case 'info':
+        return 'toast-info';
+
+      default:
+        return 'toast-success';
     }
   }
 }

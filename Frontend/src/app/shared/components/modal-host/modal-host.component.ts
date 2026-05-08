@@ -1,6 +1,16 @@
-import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewEncapsulation
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
 import { ModalService } from '../../../core/services/modal.service';
 
 @Component({
@@ -8,6 +18,7 @@ import { ModalService } from '../../../core/services/modal.service';
   standalone: true,
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, FormsModule],
+
   template: `
     <ng-container *ngIf="isOpen">
 
@@ -22,30 +33,59 @@ import { ModalService } from '../../../core/services/modal.service';
           </div>
 
           <div class="register-body">
+
             <label>Email</label>
-            <input [(ngModel)]="form.email" placeholder="exemple@email.com" type="email" />
+            <input
+              [(ngModel)]="form.email"
+              placeholder="exemple@email.com"
+              type="email"
+            />
 
             <label>Mot de passe</label>
-            <input [(ngModel)]="form.password" placeholder="Min. 6 caractères" type="password" />
+            <input
+              [(ngModel)]="form.password"
+              placeholder="Min. 6 caractères"
+              type="password"
+            />
 
             <label>Confirmer le mot de passe</label>
-            <input [(ngModel)]="form.confirm" placeholder="Répéter le mot de passe" type="password" />
+            <input
+              [(ngModel)]="form.confirm"
+              placeholder="Répéter le mot de passe"
+              type="password"
+            />
 
             <label>Rôle</label>
+
             <select [(ngModel)]="form.role">
               <option value="User">User</option>
               <option value="Manager">Manager</option>
               <option value="Admin">Admin</option>
             </select>
 
-            <div *ngIf="errorMsg" class="register-error">⚠ {{ errorMsg }}</div>
+            <div *ngIf="errorMsg" class="register-error">
+              ⚠ {{ errorMsg }}
+            </div>
+
           </div>
 
           <div class="register-footer">
-            <button class="register-btn-cancel" (click)="close()">Annuler</button>
-            <button class="register-btn-submit" (click)="submit()" [disabled]="isLoading">
+
+            <button
+              class="register-btn-cancel"
+              (click)="close()"
+            >
+              Annuler
+            </button>
+
+            <button
+              class="register-btn-submit"
+              (click)="submit()"
+              [disabled]="isLoading"
+            >
               {{ isLoading ? 'Création...' : "Créer l'utilisateur" }}
             </button>
+
           </div>
 
         </div>
@@ -53,42 +93,85 @@ import { ModalService } from '../../../core/services/modal.service';
 
     </ng-container>
   `,
+
   styles: []
 })
-export class ModalHostComponent implements OnInit {
+export class ModalHostComponent implements OnInit, OnDestroy {
 
   isOpen = false;
   isLoading = false;
   errorMsg = '';
-  form = { email: '', password: '', confirm: '', role: 'User' as 'User' | 'Manager' | 'Admin' };
+
+  form = {
+    email: '',
+    password: '',
+    confirm: '',
+    role: 'User' as 'User' | 'Manager' | 'Admin'
+  };
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private modalService: ModalService
   ) {}
 
-ngOnInit(): void {
-  this.modalService.isOpen$.subscribe(open => {
-    this.isOpen = open;
-    if (open) {
-      this.form = { email: '', password: '', confirm: '', role: 'User' };
-      this.errorMsg = '';
-    }
-  });
+  ngOnInit(): void {
 
-  this.modalService.loading$.subscribe(loading => {
-    this.isLoading = loading;
-  });
-}
+    this.modalService.isOpen$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(open => {
+
+        this.isOpen = open;
+
+        if (open) {
+
+          this.form = {
+            email: '',
+            password: '',
+            confirm: '',
+            role: 'User'
+          };
+
+          this.errorMsg = '';
+        }
+      });
+
+    this.modalService.loading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(loading => {
+
+        this.isLoading = loading;
+
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   close(): void {
     this.modalService.closeModal();
   }
 
   submit(): void {
+
     this.errorMsg = '';
-    if (!this.form.email) { this.errorMsg = "L'email est requis."; return; }
-    if (this.form.password.length < 6) { this.errorMsg = 'Min. 6 caractères.'; return; }
-    if (this.form.password !== this.form.confirm) { this.errorMsg = 'Mots de passe différents.'; return; }
+
+    if (!this.form.email) {
+      this.errorMsg = "L'email est requis.";
+      return;
+    }
+
+    if (this.form.password.length < 6) {
+      this.errorMsg = 'Min. 6 caractères.';
+      return;
+    }
+
+    if (this.form.password !== this.form.confirm) {
+      this.errorMsg = 'Mots de passe différents.';
+      return;
+    }
 
     this.modalService.submit({
       email: this.form.email.trim().toLowerCase(),

@@ -51,7 +51,7 @@ export class LoginComponent {
     this.authService.login({ email, password }).subscribe({
       next: () => {
         this.chatState.setSessions([]);
-        this.chatState.sessionId$.next(null);
+this.chatState.setSessionId(null);
         this.router.navigate(['/chat']);
       },
       error: (err) => {

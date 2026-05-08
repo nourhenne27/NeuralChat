@@ -5,13 +5,16 @@ import { RegisterModalResult } from '../../features/admin/register-modal.compone
 @Injectable({ providedIn: 'root' })
 export class ModalService {
 
-  private result$!: Subject<RegisterModalResult | null>;
+  private result$: Subject<RegisterModalResult | null> | null = null;
 
-  // État observable que modal-host écoute
-  isOpen$ = new BehaviorSubject<boolean>(false);
-  loading$ = new BehaviorSubject<boolean>(false);
+  isOpen$   = new BehaviorSubject<boolean>(false);
+  loading$  = new BehaviorSubject<boolean>(false);
 
   openRegisterModal(): Subject<RegisterModalResult | null> {
+    // Compléter le subject précédent proprement avant d'en créer un nouveau
+    if (this.result$) {
+      this.result$.complete();
+    }
     this.result$ = new Subject<RegisterModalResult | null>();
     this.loading$.next(false);
     this.isOpen$.next(true);
@@ -19,7 +22,9 @@ export class ModalService {
   }
 
   submit(data: RegisterModalResult): void {
-    this.result$.next(data);
+    if (this.result$) {
+      this.result$.next(data);
+    }
   }
 
   setLoading(loading: boolean): void {
@@ -31,6 +36,8 @@ export class ModalService {
     this.loading$.next(false);
     if (this.result$) {
       this.result$.next(null);
+      this.result$.complete();
+      this.result$ = null;
     }
   }
 }

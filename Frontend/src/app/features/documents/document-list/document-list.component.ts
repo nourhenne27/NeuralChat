@@ -1,4 +1,3 @@
-
 import { Component, OnInit }           from '@angular/core';
 import { HttpEventType }               from '@angular/common/http';
 import { DocumentService, UserRole }   from '../../../core/services/document.service';
@@ -8,8 +7,8 @@ import { DocumentDto }                 from '../../../core/models/document';
 interface DocRow {
   id:     string;
   name:   string;
-  ext:    string;    
-  date:   string;    
+  ext:    string;
+  date:   string;
   status: string;
 }
 
@@ -26,13 +25,13 @@ export class DocumentListComponent implements OnInit {
   canDelete =     false;
   canUpload =     false;
 
-  
   isDragOver =     false;
   isUploading =    false;
   uploadProgress = 0;
   uploadName =     '';
   uploadError =    '';
 
+  confirmDeleteId: string | null = null;
 
   selectedRole: UserRole = 'User';
 
@@ -42,20 +41,17 @@ export class DocumentListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-   
     this.canDelete = this.authService.isAdminOrManager();
     this.canUpload = this.authService.isAdminOrManager();
     this.loadDocuments();
   }
 
- 
   loadDocuments(): void {
     this.isLoading = true;
     this.error     = '';
 
     this.documentService.getDocuments().subscribe({
       next: (docs: DocumentDto[]) => {
-       
         this.documents = docs.map(d => this.toRow(d));
         this.isLoading = false;
       },
@@ -66,12 +62,10 @@ export class DocumentListComponent implements OnInit {
     });
   }
 
- 
   private toRow(d: DocumentDto): DocRow {
     return {
       id:   d.id,
       name: d.name,
-      
       ext:  d.format?.toUpperCase() ?? d.name.split('.').pop()?.toUpperCase() ?? '?',
       date: d.uploadedAt
         ? new Date(d.uploadedAt).toLocaleDateString('fr-FR', {
@@ -82,10 +76,20 @@ export class DocumentListComponent implements OnInit {
     };
   }
 
+  // ── Delete avec confirmation inline ──────────────────────
 
-  deleteDocument(id: string): void {
-    const doc = this.documents.find(d => d.id === id);
-    if (!confirm(`Supprimer "${doc?.name}" définitivement ?`)) return;
+  onDeleteClick(id: string): void {
+    this.confirmDeleteId = id;
+  }
+
+  cancelDelete(): void {
+    this.confirmDeleteId = null;
+  }
+
+  confirmDelete(): void {
+    if (!this.confirmDeleteId) return;
+    const id = this.confirmDeleteId;
+    this.confirmDeleteId = null;
 
     this.documentService.deleteDocument(id).subscribe({
       next:  () => { this.documents = this.documents.filter(d => d.id !== id); },
@@ -93,6 +97,7 @@ export class DocumentListComponent implements OnInit {
     });
   }
 
+  // ── Drag & drop ───────────────────────────────────────────
 
   onDragOver(e: DragEvent): void {
     e.preventDefault();
@@ -101,7 +106,7 @@ export class DocumentListComponent implements OnInit {
 
   onDragLeave(): void { this.isDragOver = false; }
 
-onDrop(e: DragEvent): void {
+  onDrop(e: DragEvent): void {
     e.preventDefault();
     this.isDragOver = false;
     if (!this.canUpload) {
@@ -124,9 +129,7 @@ onDrop(e: DragEvent): void {
     (e.target as HTMLInputElement).value = '';
   }
 
-
   private uploadFile(file: File): void {
- 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
     if (!['pdf', 'docx', 'txt', 'md'].includes(ext)) {
       this.uploadError = `Format .${ext} non supporté. Formats acceptés : pdf, docx, txt, md`;
@@ -142,7 +145,6 @@ onDrop(e: DragEvent): void {
     this.uploadName     = file.name;
     this.uploadError    = '';
 
-    
     this.documentService.uploadDocument(file, this.selectedRole).subscribe({
       next: event => {
         if (event.type === HttpEventType.UploadProgress && event.total) {
@@ -151,7 +153,7 @@ onDrop(e: DragEvent): void {
         if (event.type === HttpEventType.Response) {
           this.isUploading    = false;
           this.uploadProgress = 0;
-          this.loadDocuments(); 
+          this.loadDocuments();
         }
       },
       error: (err: Error) => {
@@ -166,7 +168,7 @@ onDrop(e: DragEvent): void {
     return ({
       Indexed: 'status-indexed',
       Pending: 'status-pending',
-      Failed:  'status-error'    
+      Failed:  'status-error'
     } as Record<string, string>)[status] ?? '';
   }
 
@@ -174,7 +176,7 @@ onDrop(e: DragEvent): void {
     return ({
       Indexed: '● Indexé',
       Pending: '◌ En attente',
-      Failed:  '✕ Erreur'       
+      Failed:  '✕ Erreur'
     } as Record<string, string>)[status] ?? status;
   }
 }

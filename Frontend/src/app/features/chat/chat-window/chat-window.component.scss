@@ -17,6 +17,33 @@
   height:         100%;
 }
 
+// ── Error banner ───────────────────────────────────────────────
+.chat-error-banner {
+  display:       flex;
+  justify-content: space-between;
+  align-items:   center;
+  padding:       10px 16px;
+  margin:        12px 24px 0;
+  background:    rgba(255, 94, 122, 0.10);
+  border:        1px solid rgba(255, 94, 122, 0.28);
+  border-radius: 8px;
+  color:         #ff5e7a;
+  font-size:     13px;
+  flex-shrink:   0;
+}
+
+.chat-error-close {
+  background: none;
+  border:     none;
+  color:      #ff5e7a;
+  cursor:     pointer;
+  font-size:  14px;
+  padding:    0 0 0 8px;
+  line-height: 1;
+
+  &:hover { opacity: .7; }
+}
+
 // ── Empty state ────────────────────────────────────────────────
 .empty-chat {
   flex:            1;
@@ -102,13 +129,11 @@
   gap:       10px;
   animation: fadeUp .25s ease both;
 
-  // Bot : avatar à gauche, bulle à gauche
   &.bot {
     flex-direction: row;
     justify-content: flex-start;
   }
 
-  // User : pas d'avatar, bulle à droite
   &.user {
     flex-direction: row-reverse;
     justify-content: flex-start;
@@ -126,7 +151,7 @@
   font-size:       16px;
   background:      linear-gradient(135deg, rgba(0,212,255,.15), rgba(0,229,160,.15));
   border:          1px solid rgba(0,212,255,.2);
-  align-self:      flex-end; // collé en bas de la bulle
+  align-self:      flex-end;
 }
 
 // ── Colonne contenant bulle + sources + meta ───────────────────
@@ -136,13 +161,8 @@
   gap:            6px;
   max-width:      68%;
 
-  .msg-wrap.user & {
-    align-items: flex-end;
-  }
-
-  .msg-wrap.bot & {
-    align-items: flex-start;
-  }
+  .msg-wrap.user & { align-items: flex-end; }
+  .msg-wrap.bot  & { align-items: flex-start; }
 }
 
 // ── Bulle ──────────────────────────────────────────────────────
@@ -153,14 +173,12 @@
   color:       var(--text);
   word-break:  break-word;
 
-  // Bulle BOT — fond neutre, coins arrondis sauf bas-gauche
   .msg-wrap.bot & {
     background:    var(--surface2);
     border:        1px solid var(--border2);
     border-radius: 18px 18px 18px 4px;
   }
 
-  // Bulle USER — dégradé violet, coins arrondis sauf bas-droit
   .msg-wrap.user & {
     background:    linear-gradient(135deg, #6c63ff, #4f46e5);
     border:        none;
@@ -168,7 +186,6 @@
     color:         #fff;
   }
 
-  // Markdown tweaks
   p        { margin: 0 0 8px; &:last-child { margin-bottom: 0; } }
   code     { font-family: var(--font-mono); font-size: 12px; background: rgba(0,0,0,.25); padding: 2px 5px; border-radius: 4px; }
   pre      { background: rgba(0,0,0,.3); border-radius: 8px; padding: 12px; overflow-x: auto; margin: 8px 0; }
@@ -177,9 +194,7 @@
   li       { margin-bottom: 2px; }
 }
 
-.typing-bubble {
-  padding: 14px 18px;
-}
+.typing-bubble { padding: 14px 18px; }
 
 // ── Sources ────────────────────────────────────────────────────
 .msg-sources {

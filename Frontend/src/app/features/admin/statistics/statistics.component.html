@@ -66,7 +66,6 @@
             </select>
           </div>
 
-          <!-- Date formatée en dd/mm/yyyy au lieu de l'ISO brut -->
           <div class="u-date">{{ formatDate(user.createdAt) }}</div>
         </div>
 
@@ -84,7 +83,7 @@
         <div class="activity-item" *ngFor="let act of activities">
           <div class="act-dot"></div>
           <div class="act-content">
-            <div class="act-text" [innerHTML]="formatActivity(act)"></div>
+            <div class="act-text">{{ formatActivity(act) }}</div>
             <div class="act-time">{{ formatTime(act.occurredAt) }}</div>
           </div>
         </div>

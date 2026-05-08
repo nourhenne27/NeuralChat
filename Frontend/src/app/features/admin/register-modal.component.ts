@@ -8,6 +8,8 @@ export interface RegisterModalResult {
   role: 'User' | 'Manager' | 'Admin';
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 @Component({
   selector: 'app-register-modal',
   standalone: true,
@@ -50,7 +52,7 @@ export interface RegisterModalResult {
   `,
 styles: [`
   :host {
-    display: block;   /* ← était "flex" avec width/height 100% */
+    display: block;
   }
 
   .modal {
@@ -208,6 +210,10 @@ export class RegisterModalComponent {
       this.errorMsg = 'L\'email est requis.';
       return;
     }
+    if (!EMAIL_REGEX.test(this.form.email.trim())) {
+      this.errorMsg = 'Format d\'email invalide.';
+      return;
+    }
     if (this.form.password.length < 6) {
       this.errorMsg = 'Le mot de passe doit contenir au moins 6 caractères.';
       return;
@@ -225,7 +231,7 @@ export class RegisterModalComponent {
     });
   }
 
-close() {
-  this.onClose?.();
-}
-}
+  close() {
+    this.onClose?.();
+  }
+} 

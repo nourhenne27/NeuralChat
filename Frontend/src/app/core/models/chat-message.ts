@@ -17,7 +17,8 @@ export interface ChatMessageDto {
   id:        string;
   sessionId: string;
   role:      'user' | 'assistant';
-  content:   string;
+  content: string;
+  hasAnswer?: boolean;
   createdAt: string;
   sources:   SourceDto[];
 }
@@ -39,4 +40,5 @@ export interface ChatMessage {
   isStreaming?: boolean;
   liked?:      boolean;
   disliked?:   boolean;
+  hasAnswer?:  boolean;  // ← ajouter cette ligne
 }

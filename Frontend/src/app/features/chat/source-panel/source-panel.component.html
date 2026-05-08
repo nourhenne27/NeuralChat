@@ -1,1 +1,8 @@
-<p>source-panel works!</p>
+<div class="source-panel" *ngIf="sources.length > 0">
+  <div class="source-title">📎 Sources</div>
+  <div class="source-item" *ngFor="let src of sources">
+    <div class="source-doc">{{ src.documentTitle }}</div>
+    <div class="source-excerpt">{{ src.excerpt }}</div>
+    <div class="source-score">Score : {{ (src.score * 100).toFixed(0) }}%</div>
+  </div>
+</div>

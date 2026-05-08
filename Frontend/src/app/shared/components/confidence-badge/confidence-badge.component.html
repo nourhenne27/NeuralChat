@@ -1,1 +1,4 @@
-<p>confidence-badge works!</p>
+<!-- confidence-badge.component.html -->
+<span class="confidence-pill" [ngClass]="getClass()">
+  {{ (score * 100).toFixed(0) }}% confiance
+</span>

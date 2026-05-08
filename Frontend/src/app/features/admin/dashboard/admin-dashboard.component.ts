@@ -5,6 +5,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { AdminStatsDto, ActivityItemDto } from '../../../core/models/document';
 import { UserDto } from '../../../core/models/auth-response';
 import { AuthService } from '../../../core/services/auth.service';
+import { normalizeRole } from '../../../core/utils/role.utils';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -22,6 +23,7 @@ export class AdminDashboardComponent implements OnInit {
   isLoadingActivity = true;
   error             = '';
   isAdmin           = false;
+  loadingRoleUserId: string | null = null;
 
   readonly ROLES: ('User' | 'Manager' | 'Admin')[] = ['User', 'Manager', 'Admin'];
 
@@ -40,12 +42,6 @@ export class AdminDashboardComponent implements OnInit {
     else this.isLoadingUsers = false;
   }
 
-  private normalizeRole(role: any): string {
-    if (typeof role === 'string' && ['Admin','Manager','User'].includes(role)) return role;
-    const map: Record<number, string> = { 0: 'Admin', 1: 'Manager', 2: 'User' };
-    return map[role as number] ?? 'User';
-  }
-
   loadStats(): void {
     this.adminService.getStats().subscribe({
       next:  stats => { this.stats = stats; this.isLoadingStats = false; },
@@ -56,7 +52,7 @@ export class AdminDashboardComponent implements OnInit {
   loadUsers(): void {
     this.adminService.getAllUsers().subscribe({
       next: users => {
-        this.users = users.map(u => ({ ...u, role: this.normalizeRole(u.role) }));
+        this.users = users.map(u => ({ ...u, role: normalizeRole(u.role) }));
         this.isLoadingUsers = false;
       },
       error: (err: Error) => { this.error = err.message; this.isLoadingUsers = false; }
@@ -70,14 +66,24 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  changeRole(userId: string, role: string): void {
-    this.adminService.updateUserRole(userId, role as 'User' | 'Manager' | 'Admin').subscribe({
+  onRoleChange(userId: string, event: Event): void {
+    const role = (event.target as HTMLSelectElement).value as 'User' | 'Manager' | 'Admin';
+    this.changeRole(userId, role);
+  }
+
+  changeRole(userId: string, role: 'User' | 'Manager' | 'Admin'): void {
+    this.loadingRoleUserId = userId;
+    this.adminService.updateUserRole(userId, role).subscribe({
       next: () => {
         const user = this.users.find(u => u.id === userId);
         if (user) user.role = role;
+        this.loadingRoleUserId = null;
         this.toastService.success('Rôle mis à jour avec succès.');
       },
-      error: (err: Error) => { this.error = err.message; }
+      error: (err: Error) => {
+        this.error = err.message;
+        this.loadingRoleUserId = null;
+      }
     });
   }
 
@@ -98,7 +104,7 @@ export class AdminDashboardComponent implements OnInit {
             const newUser: UserDto = {
               id: res.userId || '',
               email: res.email,
-              role: this.normalizeRole(res.role),
+              role: normalizeRole(res.role),
               createdAt: new Date().toISOString()
             };
             this.users = [newUser, ...this.users];
@@ -115,4 +121,5 @@ export class AdminDashboardComponent implements OnInit {
       complete: () => {}
     });
   }
-}
+} 
+

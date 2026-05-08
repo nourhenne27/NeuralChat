@@ -1,1 +1,5 @@
-<p>toast works!</p>
+<!-- toast.component.html — REMPLACER le placeholder -->
+<div class="toast" [class.show]="visible" [ngClass]="typeClass">
+  <div class="toast-icon">{{ data?.icon }}</div>
+  <div class="toast-message">{{ data?.message }}</div>
+</div>

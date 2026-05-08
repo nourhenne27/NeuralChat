@@ -1,10 +1,11 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { ChatMessage, SourceDto } from '../../../core/models/chat-message';
 
 @Component({
   selector: 'app-message-bubble',
   templateUrl: './message-bubble.component.html',
-  styleUrls: ['./message-bubble.component.scss']
+  styleUrls: ['./message-bubble.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageBubbleComponent {
   @Input() message!: ChatMessage;

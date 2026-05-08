@@ -79,7 +79,16 @@
       </div>
 
       <div class="col-actions doc-actions">
-        <button class="icon-btn danger" (click)="deleteDocument(doc.id)" title="Supprimer">✕</button>
+        <ng-container *ngIf="canDelete">
+          <!-- Confirmation inline -->
+          <ng-container *ngIf="confirmDeleteId === doc.id; else deleteBtn">
+            <button class="icon-btn confirm-yes" (click)="confirmDelete()" title="Confirmer">✓</button>
+            <button class="icon-btn confirm-no"  (click)="cancelDelete()"  title="Annuler">✕</button>
+          </ng-container>
+          <ng-template #deleteBtn>
+            <button class="icon-btn danger" (click)="onDeleteClick(doc.id)" title="Supprimer">✕</button>
+          </ng-template>
+        </ng-container>
       </div>
 
     </div>

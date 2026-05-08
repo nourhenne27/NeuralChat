@@ -1,6 +1,9 @@
-<div *ngIf="error" class="error-banner">{{ error }}</div>
+<div *ngIf="error" class="error-banner">
+  {{ error }}
+</div>
 
 <table *ngIf="users.length">
+
   <thead>
     <tr>
       <th>Email</th>
@@ -9,18 +12,33 @@
       <th>Action</th>
     </tr>
   </thead>
+
   <tbody>
+
     <tr *ngFor="let user of users">
+
       <td>{{ user.email }}</td>
+
       <td>{{ user.role }}</td>
+
       <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+
       <td>
-    <select [(ngModel)]="user.role" (ngModelChange)="changeRole(user.id, $event)">
-       <option value="User">User</option>
-      <option value="Manager">Manager</option>
-       <option value="Admin">Admin</option>
-    </select>
+        <div class="role-cell">
+          <select
+            [value]="user.role"
+            [disabled]="loadingRoleUserId === user.id"
+            (change)="onRoleChange(user.id, $event)">
+            <option value="User">User</option>
+            <option value="Manager">Manager</option>
+            <option value="Admin">Admin</option>
+          </select>
+          <span class="role-spinner" *ngIf="loadingRoleUserId === user.id">⏳</span>
+        </div>
       </td>
+
     </tr>
+
   </tbody>
-</table>
+
+</table> 

@@ -70,11 +70,15 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.subs.unsubscribe();
   }
 
-  ngAfterViewChecked(): void {
-    if (this.shouldScroll) {
+  ngAfterViewChecked(): void {}
+
+  private scheduleScroll(): void {
+    if (this.shouldScroll) return; // déjà planifié
+    this.shouldScroll = true;
+    requestAnimationFrame(() => {
       this.scrollToBottom();
       this.shouldScroll = false;
-    }
+    });
   }
 
   loadSessions(autoLoadLast = false): void {
@@ -103,8 +107,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
                 disliked:  fb.disliked
               };
             });
-          this.shouldScroll = true;
-          this.chatState.sessionId$.next(first.id);
+          this.scheduleScroll();
+          this.chatState.setSessionId(first.id);
         }
       },
       error: () => this.chatState.setSessions([])
@@ -143,7 +147,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
             disliked:  fb.disliked
           };
         });
-        this.shouldScroll = true;
+        this.scheduleScroll();
       },
       error: () => {
         this.error    = 'Impossible de charger cette session.';
@@ -169,7 +173,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     };
     this.messages.push(assistantMsg);
     this.messages = [...this.messages];
-    this.shouldScroll = true;
+    this.scheduleScroll();
 
     this.streamSub?.unsubscribe();
     this.streamSub = this.chatService
@@ -179,7 +183,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           if (token.startsWith('[SESSION:')) {
             const newId = token.slice(9, -1);
             this.sessionId = newId;
-            const currentSessions = this.chatState.sessions$.getValue();
+            const currentSessions = this.chatState.getSessions();
             this.chatState.setSessions([
               { id: newId, title: firstMessage.slice(0, 40), createdAt: new Date().toISOString(), messages: [] },
               ...currentSessions
@@ -188,7 +192,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           }
           if (token.startsWith('[SOURCES]')) {
             try {
-              const parsed: any[] = JSON.parse(token.slice(9));
+              const parsed: Partial<SourceDto>[] = JSON.parse(token.slice(9));
               assistantMsg.sources = this.normalizeSources(parsed);
             } catch {}
             this.messages = [...this.messages];
@@ -201,7 +205,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           }
           assistantMsg.content += token;
           this.messages = [...this.messages];
-          this.shouldScroll = true;
+          this.scheduleScroll();
           this.cdr.detectChanges();
         },
         error: (err: Error) => {
@@ -212,21 +216,31 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           this.isLoading   = false;
           this.isStreaming  = false;
         },
-        complete: () => {
-          assistantMsg.isStreaming = false;
-          this.messages    = [...this.messages];
-          this.isLoading   = false;
-          this.isStreaming  = false;
-          this.chatService.getUserSessions().subscribe({
-            next: res => {
-              const sorted = res
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .slice(0, 20);
-              this.chatState.setSessions(sorted);
-            }
-          });
-          this.shouldScroll = true;
-        }
+complete: () => {
+  assistantMsg.isStreaming = false;
+  
+  const content = assistantMsg.content.toLowerCase();
+const noAnswerPhrases = [
+  'je ne trouve pas',
+  'je n\'ai pas trouvé',
+  'je n\'ai trouvé aucune',
+  'could not find',
+  'i could not find',
+  'no information',
+  'aucune information',
+  'pas d\'information',
+  'je ne peux pas comprendre',  // ← ajouter
+  'puis-je vous aider avec autre chose',  // ← ajouter
+];0.
+  
+  assistantMsg.hasAnswer = !!assistantMsg.content && 
+    !noAnswerPhrases.some(phrase => content.includes(phrase));
+
+  this.messages    = [...this.messages];
+  this.isLoading   = false;
+  this.isStreaming  = false;
+  this.scheduleScroll();
+}
       });
   }
 
@@ -259,7 +273,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); }
   }
 
-  trackByIndex(i: number) { return i; }
+  trackByMessage(i: number, msg: ChatMessage): string | number {
+    return msg.messageId ?? msg.timestamp?.getTime() ?? i;
+  }
 
   loadSuggestions(): void {
     this.suggestions = ["Qu'est-ce que RAG ?", "Comment fonctionne Angular ?", "Explique SQL vector search"];
@@ -272,14 +288,14 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     });
   }
 
-private normalizeSources(sources: any[] | undefined): SourceDto[] {
+  private normalizeSources(sources: Partial<SourceDto>[] | undefined): SourceDto[] {
     if (!sources?.length) return [];
     const seen = new Set<string>();
     return sources
-      .map((s: any) => ({
-        documentTitle: s.documentTitle ?? s.DocumentTitle ?? s.title ?? s.name ?? '',
-        excerpt:       s.excerpt       ?? s.Excerpt       ?? '',
-        score:         s.score         ?? s.Score         ?? 0
+      .map((s) => ({
+        documentTitle: (s as any).documentTitle ?? (s as any).DocumentTitle ?? (s as any).title ?? (s as any).name ?? '',
+        excerpt:       s.excerpt       ?? (s as any).Excerpt ?? '',
+        score:         s.score         ?? (s as any).Score   ?? 0
       }))
       .sort((a, b) => b.score - a.score)
       .filter(s => {
@@ -287,9 +303,8 @@ private normalizeSources(sources: any[] | undefined): SourceDto[] {
         seen.add(s.documentTitle);
         return true;
       })
-      .slice(0, 1);
+      .slice(0, 5);
   }
-
 
   // ── Feedback persistence (localStorage) ──────────────────
   private feedbackKey(messageId: string): string {

@@ -1,83 +1,88 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { AuthResponseDto, LoginRequestDto } from '../models/auth-response';
+import {
+  AuthResponseDto,
+  LoginRequestDto,
+  RegisterRequestDto
+} from '../models/auth-response';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  private readonly AUTH_USER_KEY = 'auth_user';
-  private readonly TOKEN_KEY     = 'access_token';
+  private readonly API = environment.apiUrl;
+  private readonly TOKEN_KEY = 'auth_token';
+  private readonly USER_KEY  = 'auth_user';
 
-  private currentUserSubject = new BehaviorSubject<AuthResponseDto | null>(
-    this.loadFromStorage()
-  );
-  public currentUser$ = this.currentUserSubject.asObservable();
+  currentUser$ = new BehaviorSubject<AuthResponseDto | null>(this.loadUser());
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {}
 
-  private normalizeRole(role: any): string {
-    if (typeof role === 'string' && ['Admin','Manager','User'].includes(role)) return role;
-    const map: Record<number, string> = { 0: 'Admin', 1: 'Manager', 2: 'User' };
-    return map[role as number] ?? 'User';
-  }
+  // ── Auth ──────────────────────────────────────────────────
 
-  private loadFromStorage(): AuthResponseDto | null {
-    try {
-      const stored = localStorage.getItem(this.AUTH_USER_KEY);
-      if (!stored) return null;
-      const parsed = JSON.parse(stored);
-      parsed.role = this.normalizeRole(parsed.role);
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
-  login(dto: LoginRequestDto): Observable<AuthResponseDto> {
+  login(credentials: LoginRequestDto): Observable<AuthResponseDto> {
     return this.http
-      .post<AuthResponseDto>(`${environment.apiUrl}/auth/login`, dto)
-      .pipe(
-        tap(response => {
-          response.role = this.normalizeRole(response.role);
-          localStorage.setItem(this.TOKEN_KEY,     response.token);
-          localStorage.setItem(this.AUTH_USER_KEY, JSON.stringify(response));
-          this.currentUserSubject.next(response);
-        })
-      );
+      .post<AuthResponseDto>(`${this.API}/auth/login`, credentials)
+      .pipe(tap(res => this.saveSession(res)));
   }
 
-logout(): void {
-    localStorage.clear();
-    this.currentUserSubject.next(null);
+  register(payload: RegisterRequestDto): Observable<AuthResponseDto> {
+    return this.http
+      .post<AuthResponseDto>(`${this.API}/auth/register`, payload)
+      .pipe(tap(res => this.saveSession(res)));
   }
+
+  logout(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+    this.currentUser$.next(null);
+    this.router.navigate(['/auth/login']);
+  }
+
+  // ── Token / session ───────────────────────────────────────
 
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
   isLoggedIn(): boolean {
-    const token = this.getToken();
-    if (!token) return false;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 > Date.now();
-    } catch {
-      return false;
-    }
+    return !!this.getToken();
   }
 
-  getCurrentUser(): AuthResponseDto | null {
-    return this.currentUserSubject.value;
+  // ── Role helpers ──────────────────────────────────────────
+
+  getRole(): string | null {
+    return this.currentUser$.value?.role ?? null;
   }
 
   isAdmin(): boolean {
-    return this.getCurrentUser()?.role === 'Admin';
+    return this.getRole() === 'Admin';
   }
 
   isAdminOrManager(): boolean {
-    const role = this.getCurrentUser()?.role;
+    const role = this.getRole();
     return role === 'Admin' || role === 'Manager';
+  }
+
+  // ── Private ───────────────────────────────────────────────
+
+  private saveSession(res: AuthResponseDto): void {
+    localStorage.setItem(this.TOKEN_KEY, res.token);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(res));
+    this.currentUser$.next(res);
+  }
+
+  private loadUser(): AuthResponseDto | null {
+    try {
+      const raw = localStorage.getItem(this.USER_KEY);
+      return raw ? (JSON.parse(raw) as AuthResponseDto) : null;
+    } catch {
+      return null;
+    }
   }
 }

@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { MarkdownModule } from 'ngx-markdown';
 import { SharedModule }      from '../../shared/shared.module';
 import { ChatRoutingModule } from './chat-routing.module';
-import { ConfidenceBadgeComponent } from '../../shared/components/confidence-badge/confidence-badge.component';
 import { ChatWindowComponent }   from './chat-window/chat-window.component';
 import { MessageBubbleComponent } from './message-bubble/message-bubble.component';
 import { ChatInputComponent }    from './chat-input/chat-input.component';
@@ -19,7 +18,6 @@ import { CommonModule } from '@angular/common';
     ChatInputComponent,
     SessionListComponent,
     SourcePanelComponent,
-    ConfidenceBadgeComponent,
     FeedbackModalComponent,
   ],
   imports: [

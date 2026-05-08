@@ -1,3 +1,4 @@
+import { tap, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -43,21 +44,23 @@ export class AdminService {
     });
   }
 
-  exportReport(): void {
-    const token = localStorage.getItem('access_token');
-    const url = `${environment.apiUrl}/admin/export`;
-
-  
-    fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(r => r.blob())
-    .then(blob => {
-      const a = document.createElement('a');
-      a.href  = URL.createObjectURL(blob);
+exportReport(): Observable<void> {
+  return this.http.get(`${this.base}/export`, {
+    responseType: 'blob',
+    observe: 'response'
+  }).pipe(
+    tap((response: any) => {
+      const blob = response.body!;
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
       a.download = `rapport_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(a.href);
-    });
-  }
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }),
+    map(() => void 0)
+  );
+}
 }

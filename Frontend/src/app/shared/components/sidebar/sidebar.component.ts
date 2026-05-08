@@ -11,7 +11,7 @@ import { ChatSessionDto }   from '../../../core/models/chat-message';
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None  // Intentionnel : les styles du sidebar ciblent des éléments hors scope (ex: modals, overlays)
 })
 export class SidebarComponent implements OnInit, OnDestroy {
 
@@ -78,7 +78,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   selectSession(id: string): void {
-    if (this.editingSessionId === id) return; // Don't switch while editing
+    if (this.editingSessionId === id) return;
     this.router.navigate(['/chat']).then(() => {
       this.chatState.selectSession(id);
     });
@@ -107,7 +107,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     this.chatService.deleteSession(id).subscribe({
       next: () => {
-        const updated = this.chatState.sessions$.getValue().filter(s => s.id !== id);
+        const updated = this.chatState.getSessions().filter((s: ChatSessionDto) => s.id !== id);
         this.chatState.setSessions(updated);
         if (this.activeSessionId === id) this.chatState.triggerNewChat();
       },
@@ -128,7 +128,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     this.chatService.renameSession(sessionId, title).subscribe({
       next: () => {
-        const updated = this.chatState.sessions$.getValue().map(s =>
+        const updated = this.chatState.getSessions().map((s: ChatSessionDto) =>
           s.id === sessionId ? { ...s, title } : s
         );
         this.chatState.setSessions(updated);

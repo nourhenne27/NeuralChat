@@ -5,11 +5,15 @@ import { FormsModule }       from '@angular/forms';
 import { NavbarComponent }   from './components/navbar/navbar.component';
 import { SidebarComponent }  from './components/sidebar/sidebar.component';
 import { ModalHostComponent } from './components/modal-host/modal-host.component';
+import { ToastComponent }    from './components/toast/toast.component';
+import { ConfidenceBadgeComponent } from './components/confidence-badge/confidence-badge.component';
 
 @NgModule({
   declarations: [
     NavbarComponent,
     SidebarComponent,
+    ToastComponent,
+    ConfidenceBadgeComponent,
   ],
   imports: [
     CommonModule,
@@ -21,6 +25,8 @@ import { ModalHostComponent } from './components/modal-host/modal-host.component
     NavbarComponent,
     SidebarComponent,
     ModalHostComponent,
+    ToastComponent,
+    ConfidenceBadgeComponent,
     CommonModule,
     RouterModule,
     FormsModule,
