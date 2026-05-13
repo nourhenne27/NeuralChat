@@ -1,8 +1,7 @@
-
-import { Injectable }                      from '@angular/core';
+import { Injectable }                        from '@angular/core';
 import { HttpClient, HttpEvent, HttpRequest } from '@angular/common/http';
-import { Observable }                       from 'rxjs';
-import { environment }                      from '../../../environments/environment';
+import { Observable }                         from 'rxjs';
+import { environment }                        from '../../../environments/environment';
 import { DocumentDto, IndexDocumentResponse } from '../models/document';
 
 export type UserRole = 'Admin' | 'Manager' | 'User';
@@ -14,7 +13,6 @@ export class DocumentService {
 
   constructor(private http: HttpClient) {}
 
-
   getDocuments(): Observable<DocumentDto[]> {
     return this.http.get<DocumentDto[]>(this.base);
   }
@@ -23,23 +21,23 @@ export class DocumentService {
     file: File,
     roleRequired: UserRole = 'User'
   ): Observable<HttpEvent<IndexDocumentResponse>> {
-
     const formData = new FormData();
-    formData.append('File', file); 
+    formData.append('File', file);
 
     const req = new HttpRequest<FormData>(
       'POST',
       `${this.base}/upload?roleRequired=${roleRequired}`,
       formData,
-      {
-        reportProgress: true,
-        responseType:   'json'
-      }
+      { reportProgress: true, responseType: 'json' }
     );
 
     return this.http.request<IndexDocumentResponse>(req);
   }
 
+  // ✅ Nouveau — modifier le rôle d'accès d'un document existant
+  updateDocumentRole(id: string, roleRequired: UserRole): Observable<void> {
+    return this.http.patch<void>(`${this.base}/${id}/role`, { roleRequired });
+  }
 
   deleteDocument(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);

@@ -5,11 +5,12 @@ import { AuthService }                 from '../../../core/services/auth.service
 import { DocumentDto }                 from '../../../core/models/document';
 
 interface DocRow {
-  id:     string;
-  name:   string;
-  ext:    string;
-  date:   string;
-  status: string;
+  id:           string;
+  name:         string;
+  ext:          string;
+  date:         string;
+  status:       string;
+  roleRequired: UserRole; // ✅ ajout
 }
 
 @Component({
@@ -31,7 +32,8 @@ export class DocumentListComponent implements OnInit {
   uploadName =     '';
   uploadError =    '';
 
-  confirmDeleteId: string | null = null;
+  confirmDeleteId:  string | null = null;
+  updatingRoleId:   string | null = null; // ✅ spinner rôle
 
   selectedRole: UserRole = 'User';
 
@@ -64,16 +66,34 @@ export class DocumentListComponent implements OnInit {
 
   private toRow(d: DocumentDto): DocRow {
     return {
-      id:   d.id,
-      name: d.name,
-      ext:  d.format?.toUpperCase() ?? d.name.split('.').pop()?.toUpperCase() ?? '?',
-      date: d.uploadedAt
+      id:           d.id,
+      name:         d.name,
+      ext:          d.format?.toUpperCase() ?? d.name.split('.').pop()?.toUpperCase() ?? '?',
+      date:         d.uploadedAt
         ? new Date(d.uploadedAt).toLocaleDateString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric'
           })
         : '—',
-      status: d.status ?? 'Pending'
+      status:       d.status ?? 'Pending',
+      roleRequired: (d.roleRequired as UserRole) ?? 'User' // ✅
     };
+  }
+
+  // ✅ Changer le rôle d'un document existant
+  onRoleChange(doc: DocRow, event: Event): void {
+    const role = (event.target as HTMLSelectElement).value as UserRole;
+    this.updatingRoleId = doc.id;
+
+    this.documentService.updateDocumentRole(doc.id, role).subscribe({
+      next: () => {
+        doc.roleRequired    = role;
+        this.updatingRoleId = null;
+      },
+      error: (err: Error) => {
+        this.error          = err.message;
+        this.updatingRoleId = null;
+      }
+    });
   }
 
   onDeleteClick(id: string): void { this.confirmDeleteId = id; }
@@ -151,12 +171,28 @@ export class DocumentListComponent implements OnInit {
     });
   }
 
+  getRoleLabel(role: UserRole): string {
+    return ({
+      User:    'Tous',
+      Manager: 'Manager+',
+      Admin:   'Admin'
+    } as Record<string, string>)[role] ?? role;
+  }
+
+  getRoleClass(role: UserRole): string {
+    return ({
+      User:    'role-user',
+      Manager: 'role-manager',
+      Admin:   'role-admin'
+    } as Record<string, string>)[role] ?? '';
+  }
+
   getStatusClass(status: string): string {
     return ({
       Indexed:  'status-indexed',
       Pending:  'status-pending',
       Failed:   'status-error',
-      Deleting: 'status-pending' // ✅ même style visuel que Pending (en cours)
+      Deleting: 'status-pending'
     } as Record<string, string>)[status] ?? '';
   }
 
@@ -165,7 +201,7 @@ export class DocumentListComponent implements OnInit {
       Indexed:  '● Indexé',
       Pending:  '◌ En attente',
       Failed:   '✕ Erreur',
-      Deleting: '⟳ Suppression...' // ✅ label propre pour Deleting
+      Deleting: '⟳ Suppression...'
     } as Record<string, string>)[status] ?? status;
   }
-} 
+}

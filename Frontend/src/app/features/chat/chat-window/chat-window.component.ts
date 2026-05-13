@@ -149,22 +149,24 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     });
   }
 
-  private mapMessages(msgs: any[]): ChatMessage[] {
-    return msgs
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-      .map(m => {
-        const fb = this.restoreFeedback(m.id);
-        return {
-          role:      m.role,
-          content:   m.content,
-          timestamp: new Date(m.createdAt),
-          messageId: m.id,
-          sources:   this.normalizeSources(m.sources),
-          liked:     fb.liked,
-          disliked:  fb.disliked
-        };
-      });
-  }
+private mapMessages(msgs: any[]): ChatMessage[] {
+  return msgs
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map(m => {
+      const fb = this.restoreFeedback(m.id);
+      const sources = this.normalizeSources(m.sources);
+      return {
+        role:      m.role,
+        content:   m.content,
+        timestamp: new Date(m.createdAt),
+        messageId: m.id,
+        sources:   sources.length ? [...sources] : [], // ✅ nouvelle référence tableau
+        liked:     fb.liked,
+        disliked:  fb.disliked,
+        hasAnswer: m.role === 'assistant' && !!m.content // ✅ hasAnswer défini au refresh
+      };
+    });
+}
 
   sendMessage(question?: string): void {
     const text = (question ?? this.inputText).trim();

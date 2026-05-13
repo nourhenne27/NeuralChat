@@ -13,7 +13,9 @@ public class GetDocumentsQueryHandler : IRequestHandler<GetDocumentsQuery, List<
         _documentRepository = documentRepository;
     }
 
-    public async Task<List<DocumentDto>> Handle(GetDocumentsQuery request, CancellationToken cancellationToken)
+    public async Task<List<DocumentDto>> Handle(
+        GetDocumentsQuery request,
+        CancellationToken cancellationToken)
     {
         var documents = await _documentRepository.GetAllAsync(request.UserRole);
 
@@ -21,8 +23,9 @@ public class GetDocumentsQueryHandler : IRequestHandler<GetDocumentsQuery, List<
         {
             Id = d.Id,
             Name = d.Name,
-            Format = d.Format,
-            Status = d.Status,
+            Format = d.Format.ToString(),
+            Status = d.Status.ToString(),
+            RoleRequired = d.RoleRequired.ToString(), // ✅ ajout
             UploadedAt = d.UploadedAt
         }).ToList();
     }

@@ -1,9 +1,10 @@
 export interface DocumentDto {
-  id:         string;
-  name:       string;
-  format:     'Pdf' | 'Docx' | 'Txt' | 'Md';
-  status:     'Pending' | 'Indexed' | 'Failed' | 'Deleting'; // ✅ ajout Deleting
-  uploadedAt: string;
+  id:           string;
+  name:         string;
+  format:       string;
+  status:       'Pending' | 'Indexed' | 'Failed' | 'Deleting';
+  roleRequired: 'User' | 'Manager' | 'Admin'; // ✅ ajout
+  uploadedAt:   string;
 }
 
 export interface IndexDocumentResponse {

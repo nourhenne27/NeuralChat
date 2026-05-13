@@ -40,12 +40,13 @@
             <div *ngIf="msg.role === 'user'">{{ msg.content }}</div>
           </div>
 
- <div class="msg-sources" *ngIf="msg.role === 'assistant' && msg.sources?.length && msg.hasAnswer">
-  <span class="sources-label">Sources :</span>
-  <div class="source-chip" *ngFor="let src of msg.sources">
-    📎 {{ src.documentTitle }}
-  </div>
-</div>
+          <!-- ✅ msg.hasAnswer supprimé — les sources s'affichent si elles existent -->
+          <div class="msg-sources" *ngIf="msg.role === 'assistant' && msg.sources?.length">
+            <span class="sources-label">Sources :</span>
+            <div class="source-chip" *ngFor="let src of msg.sources">
+              📎 {{ src.documentTitle }}
+            </div>
+          </div>
 
           <div class="msg-meta" *ngIf="msg.role === 'assistant' && !msg.isStreaming">
             <div class="feedback-row">

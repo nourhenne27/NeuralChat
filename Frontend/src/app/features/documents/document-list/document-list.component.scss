@@ -279,3 +279,143 @@
   &:nth-child(2) { animation-delay: 0.2s; }
   &:nth-child(3) { animation-delay: 0.4s; }
 }
+// ── Role selector ─────────────────────────────────────────
+.role-selector {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             10px;
+  margin-top:      16px;
+}
+
+.role-label {
+  font-size:   11px;
+  font-family: var(--font-mono);
+  color:       var(--text3);
+  white-space: nowrap;
+}
+
+.role-select {
+  background:    var(--surface2);
+  border:        1px solid var(--border2);
+  border-radius: 8px;
+  padding:       5px 28px 5px 10px;
+  font-size:     11px;
+  font-family:   var(--font-mono);
+  color:         var(--text2);
+  cursor:        pointer;
+  outline:       none;
+  appearance:    none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:   no-repeat;
+  background-position: right 8px center;
+  transition:    border-color 0.15s;
+
+  &:hover, &:focus {
+    border-color: rgba(0, 212, 255, 0.4);
+    color:        var(--text);
+  }
+
+  option {
+    background: var(--surface2);
+    color:      var(--text);
+  }
+}
+
+// ── Upload error ──────────────────────────────────────────
+.upload-error {
+  margin-top:    12px;
+  padding:       10px 14px;
+  background:    rgba(255, 94, 122, 0.08);
+  border:        1px solid rgba(255, 94, 122, 0.20);
+  border-radius: 10px;
+  color:         var(--red);
+  font-size:     12px;
+  font-family:   var(--font-mono);
+}
+
+// ── Confirm buttons ───────────────────────────────────────
+.confirm-yes {
+  &:hover {
+    border-color: rgba(0, 229, 160, 0.35);
+    color:        var(--emerald);
+  }
+}
+
+.confirm-no {
+  &:hover {
+    border-color: rgba(255, 94, 122, 0.35);
+    color:        var(--red);
+  }
+}
+// ── Colonne Accès ─────────────────────────────────────────
+.docs-table-header,
+.doc-row {
+  grid-template-columns: minmax(0, 4fr) minmax(130px, 1fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr) 60px;
+}
+
+.col-acces {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+}
+
+.role-select-inline {
+  background:    var(--surface2);
+  border:        1px solid var(--border2);
+  border-radius: 6px;
+  padding:       3px 20px 3px 8px;
+  font-size:     11px;
+  font-family:   var(--font-mono);
+  color:         var(--text2);
+  cursor:        pointer;
+  outline:       none;
+  appearance:    none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:   no-repeat;
+  background-position: right 6px center;
+  transition:    border-color 0.15s;
+
+  &:hover:not(:disabled) { border-color: rgba(0, 212, 255, 0.4); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.role-spinner {
+  font-size:  12px;
+  color:      var(--cyan);
+  animation:  spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.role-badge {
+  display:       inline-flex;
+  align-items:   center;
+  font-size:     11px;
+  font-family:   var(--font-mono);
+  padding:       3px 9px;
+  border-radius: 5px;
+
+  &.role-user {
+    background: rgba(0, 212, 255, 0.08);
+    border:     1px solid rgba(0, 212, 255, 0.20);
+    color:      var(--cyan);
+  }
+
+  &.role-manager {
+    background: rgba(124, 106, 255, 0.08);
+    border:     1px solid rgba(124, 106, 255, 0.20);
+    color:      var(--violet);
+  }
+
+  &.role-admin {
+    background: rgba(255, 181, 71, 0.08);
+    border:     1px solid rgba(255, 181, 71, 0.20);
+    color:      var(--amber);
+  }
+}

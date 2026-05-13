@@ -13,6 +13,8 @@ public class UploadDocumentRequest
     public IFormFile File { get; set; } = null!;
 }
 
+public record UpdateDocumentRoleRequest(UserRole RoleRequired);
+
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
@@ -63,6 +65,20 @@ public class DocumentController : ControllerBase
 
         var result = await _mediator.Send(new GetDocumentsQuery(role));
         return Ok(result);
+    }
+
+    // ✅ Nouveau endpoint — modifier le rôle d'accès d'un document
+    [HttpPatch("{id:guid}/role")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> UpdateDocumentRole(
+        Guid id,
+        [FromBody] UpdateDocumentRoleRequest request)
+    {
+        if (!Enum.IsDefined(typeof(UserRole), request.RoleRequired))
+            return BadRequest("Rôle invalide.");
+
+        await _mediator.Send(new UpdateDocumentRoleCommand(id, request.RoleRequired));
+        return NoContent();
     }
 
     [HttpDelete("{id}")]

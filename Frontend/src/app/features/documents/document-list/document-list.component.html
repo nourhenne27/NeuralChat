@@ -24,17 +24,22 @@
       <span class="fmt-tag">MD</span>
     </div>
 
+    <div class="role-selector" *ngIf="canUpload && !isUploading" (click)="$event.stopPropagation()">
+      <label class="role-label">Accessible par :</label>
+      <select class="role-select" [(ngModel)]="selectedRole">
+        <option value="User">Tous les utilisateurs</option>
+        <option value="Manager">Manager et Admin</option>
+        <option value="Admin">Admin uniquement</option>
+      </select>
+    </div>
+
     <div class="upload-progress-bar" [class.show]="isUploading">
       <div class="upload-progress-fill" [style.width.%]="uploadProgress"></div>
     </div>
     <div class="upload-pct" *ngIf="isUploading">{{ uploadProgress.toFixed(0) }}%</div>
 
-    <input
-      type="file"
-      id="file-input"
-      accept=".pdf,.docx,.txt,.md"
-      style="display:none"
-      (change)="onFileSelected($event)"/>
+    <input type="file" id="file-input" accept=".pdf,.docx,.txt,.md"
+           style="display:none" (change)="onFileSelected($event)"/>
   </div>
 
   <div class="section-header">
@@ -51,6 +56,7 @@
       <div class="col-fichier">Fichier</div>
       <div class="col-date">Indexé le</div>
       <div class="col-status">Statut</div>
+      <div class="col-acces">Accès</div>  <!-- ✅ nouvelle colonne -->
       <div class="col-actions">Actions</div>
     </div>
 
@@ -78,9 +84,28 @@
         </span>
       </div>
 
+      <!-- ✅ Colonne Accès — select si canUpload, badge sinon -->
+      <div class="col-acces">
+        <ng-container *ngIf="canUpload; else roleBadge">
+          <select class="role-select-inline"
+                  [value]="doc.roleRequired"
+                  [disabled]="updatingRoleId === doc.id"
+                  (change)="onRoleChange(doc, $event)">
+            <option value="User">Tous</option>
+            <option value="Manager">Manager+</option>
+            <option value="Admin">Admin</option>
+          </select>
+          <span class="role-spinner" *ngIf="updatingRoleId === doc.id">⟳</span>
+        </ng-container>
+        <ng-template #roleBadge>
+          <span class="role-badge" [ngClass]="getRoleClass(doc.roleRequired)">
+            {{ getRoleLabel(doc.roleRequired) }}
+          </span>
+        </ng-template>
+      </div>
+
       <div class="col-actions doc-actions">
         <ng-container *ngIf="canDelete">
-          <!-- Confirmation inline -->
           <ng-container *ngIf="confirmDeleteId === doc.id; else deleteBtn">
             <button class="icon-btn confirm-yes" (click)="confirmDelete()" title="Confirmer">✓</button>
             <button class="icon-btn confirm-no"  (click)="cancelDelete()"  title="Annuler">✕</button>
@@ -98,4 +123,10 @@
     </div>
 
   </div>
-</div>
+
+  <div class="upload-error" *ngIf="uploadError">
+    ⚠ {{ uploadError }}
+  </div>
+
+</div> 
+
