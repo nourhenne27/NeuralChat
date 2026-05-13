@@ -10,6 +10,8 @@ using Infrastructure;
 using Infrastructure.Options;
 using Microsoft.AspNetCore.Http.Features;
 using Application.Common.Interfaces;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +28,6 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        // Force UTC 'Z' suffix sur toutes les dates → le navigateur convertit en heure locale
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
     });
 
@@ -38,6 +39,21 @@ builder.Services.Configure<FormOptions>(options =>
 builder.Services.Configure<IISServerOptions>(options =>
 {
     options.MaxRequestBodySize = 50 * 1024 * 1024;
+});
+
+// ====================== Rate Limiting ======================
+builder.Services.AddRateLimiter(options =>
+{
+    // ✅ Protection brute force sur /api/auth/login
+    options.AddFixedWindowLimiter("LoginPolicy", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 // ====================== Swagger (dev uniquement) ======================
@@ -99,7 +115,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+                // ✅ ILogger au lieu de Console.WriteLine
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Authentication failed: {Message}",
+                    context.Exception.Message);
                 return Task.CompletedTask;
             }
         };
@@ -158,14 +178,13 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowAngular");
+app.UseRateLimiter(); // ✅ Après CORS, avant Authentication
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
 
-// Convertisseur qui s'assure que les DateTime UTC sont sérialisées avec le suffixe 'Z'
-// afin que le navigateur les affiche en heure locale automatiquement.
 public class UtcDateTimeConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

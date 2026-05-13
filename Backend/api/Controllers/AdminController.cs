@@ -31,13 +31,14 @@ public class AdminController : ControllerBase
         return Ok(users);
     }
 
-    // ===================== REGISTER USER (Admin only) =====================
+    // ===================== REGISTER USER =====================
     [HttpPost("users/register")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterRequestDto request)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
         var command = new RegisterUserCommand(request.Email, request.Password, request.Role);
         var result = await _mediator.Send(command);
         return CreatedAtAction(nameof(GetAllUsers), new { }, result);
@@ -50,11 +51,21 @@ public class AdminController : ControllerBase
     {
         if (!Enum.IsDefined(typeof(UserRole), request.Role))
             return BadRequest("Rôle invalide.");
+
         await _mediator.Send(new UpdateUserRoleCommand(id, request.Role));
         return NoContent();
     }
 
-    // ===================== STATS (KPIs) =====================
+    // ===================== DELETE USER =====================
+    [HttpDelete("users/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteUser(Guid id)
+    {
+        await _mediator.Send(new DeleteUserCommand(id));
+        return NoContent();
+    }
+
+    // ===================== STATS =====================
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats()
     {
@@ -68,6 +79,7 @@ public class AdminController : ControllerBase
     {
         if (limit is < 1 or > 100)
             return BadRequest("limit doit être entre 1 et 100.");
+
         var result = await _mediator.Send(new GetRecentActivityQuery(limit));
         return Ok(result);
     }
@@ -77,14 +89,12 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> ExportReport()
     {
         var report = await _mediator.Send(new ExportReportQuery());
-
         var json = JsonSerializer.Serialize(report, new JsonSerializerOptions
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Converters = { new JsonStringEnumConverter() }
         });
-
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var fileName = $"rapport_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
         return File(bytes, "application/json", fileName);

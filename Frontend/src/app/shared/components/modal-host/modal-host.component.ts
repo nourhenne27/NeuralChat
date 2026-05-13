@@ -113,7 +113,7 @@ export class ModalHostComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: ModalService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
 
@@ -153,13 +153,18 @@ export class ModalHostComponent implements OnInit, OnDestroy {
   close(): void {
     this.modalService.closeModal();
   }
-
   submit(): void {
 
     this.errorMsg = '';
 
     if (!this.form.email) {
       this.errorMsg = "L'email est requis.";
+      return;
+    }
+
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!EMAIL_REGEX.test(this.form.email.trim())) {
+      this.errorMsg = "Format d'email invalide.";
       return;
     }
 

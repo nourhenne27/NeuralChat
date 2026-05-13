@@ -16,6 +16,12 @@ public class RAGService
     private readonly IChatSessionRepository _chatSessionRepository;
     private readonly ChunkingOptions _chunkingOptions;
 
+    private static readonly JsonSerializerOptions _camelCase = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     private static readonly string[] _noAnswerPhrases =
     [
         "could not find", "cannot find", "not find", "no information",
@@ -127,10 +133,13 @@ public class RAGService
             yield break;
         }
 
-        // ✅ FIX : suppression du .Take(1) et du .Where redondant
-        // Les sources suivent les mêmes règles que GetResponseAsync (TopK résultats)
-        var sourcesPayload = finalResults
-            .Where(r => r.Chunk.Document != null)
+        var pertinentResults = finalResults
+            .Where(r => r.Chunk.Document != null && r.Score >= _chunkingOptions.SimilarityThreshold)
+            .OrderByDescending(r => r.Score)
+            .ToList();
+
+        // ✅ Sources affichage Angular
+        var sourcesPayload = pertinentResults
             .GroupBy(r => r.Chunk.Document.Name)
             .Select(g =>
             {
@@ -145,14 +154,12 @@ public class RAGService
                     Score = Math.Round(best.Score, 4)
                 };
             })
-            .OrderByDescending(s => s.Score)
             .ToList();
 
-        var sourcesJson = JsonSerializer.Serialize(sourcesPayload, new JsonSerializerOptions
-        {
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        yield return $"[SOURCES_DATA]{sourcesJson}";
+        // ✅ ChunkIds pour RLHF (RecordPositiveFeedbackAsync)
+        var chunkIds = pertinentResults.Select(r => r.Chunk.Id).ToList();
+
+        yield return $"[SOURCES_DATA]{JsonSerializer.Serialize(sourcesPayload, _camelCase)}";
+        yield return $"[CHUNK_IDS]{JsonSerializer.Serialize(chunkIds)}";
     }
 }

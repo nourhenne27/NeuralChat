@@ -2,7 +2,7 @@ export interface DocumentDto {
   id:         string;
   name:       string;
   format:     'Pdf' | 'Docx' | 'Txt' | 'Md';
-  status:     'Pending' | 'Indexed' | 'Failed';
+  status:     'Pending' | 'Indexed' | 'Failed' | 'Deleting'; // ✅ ajout Deleting
   uploadedAt: string;
 }
 
@@ -10,7 +10,6 @@ export interface IndexDocumentResponse {
   documentId: string;
   message:    string;
 }
-
 
 export interface AdminStatsDto {
   totalQuestions:         number;

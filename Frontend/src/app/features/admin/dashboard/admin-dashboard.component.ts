@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { AdminService } from '../../../core/services/admin.service';
+import { AdminService, RegisterUserResponse } from '../../../core/services/admin.service'; // ✅ ajout RegisterUserResponse
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AdminStatsDto, ActivityItemDto } from '../../../core/models/document';
@@ -31,8 +31,8 @@ export class AdminDashboardComponent implements OnInit {
     private adminService: AdminService,
     private modalService: ModalService,
     private toastService: ToastService,
-    private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private authService:  AuthService,
+    private cdr:          ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -63,7 +63,7 @@ export class AdminDashboardComponent implements OnInit {
   loadActivity(): void {
     this.adminService.getActivity(10).subscribe({
       next:  act => { this.activity = act; this.isLoadingActivity = false; },
-      error: () => { this.isLoadingActivity = false; }
+      error: ()  => { this.isLoadingActivity = false; }
     });
   }
 
@@ -92,7 +92,7 @@ export class AdminDashboardComponent implements OnInit {
 
   exportReport(): void {
     this.adminService.exportReport().subscribe({
-      next: () => this.toastService.success('Rapport téléchargé avec succès.'),
+      next:  () => this.toastService.success('Rapport téléchargé avec succès.'),
       error: () => this.toastService.error('Erreur lors de l\'export.')
     });
   }
@@ -105,12 +105,12 @@ export class AdminDashboardComponent implements OnInit {
         if (!data) return;
         this.modalService.setLoading(true);
         this.adminService.registerUser(data).subscribe({
-          next: (res) => {
+          next: (res: RegisterUserResponse) => { // ✅ type correct
             this.modalService.closeModal();
             const newUser: UserDto = {
-              id: res.userId || '',
-              email: res.email,
-              role: normalizeRole(res.role),
+              id:        res.userId,
+              email:     res.email,
+              role:      normalizeRole(res.role),
               createdAt: new Date().toISOString()
             };
             this.users = [newUser, ...this.users];
@@ -123,8 +123,8 @@ export class AdminDashboardComponent implements OnInit {
           }
         });
       },
-      error: (err) => { console.error(err); this.modalService.closeModal(); },
+      error:    (err) => { console.error(err); this.modalService.closeModal(); },
       complete: () => {}
     });
   }
-}
+} 

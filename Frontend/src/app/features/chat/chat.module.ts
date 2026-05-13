@@ -15,7 +15,6 @@ import { CommonModule } from '@angular/common';
   declarations: [
     ChatWindowComponent,
     MessageBubbleComponent,
-    ChatInputComponent,
     SessionListComponent,
     SourcePanelComponent,
     FeedbackModalComponent,
@@ -25,7 +24,8 @@ import { CommonModule } from '@angular/common';
     ChatRoutingModule,
     CommonModule,
     FormsModule,
-    MarkdownModule.forChild()
+    MarkdownModule.forChild(),
+    ChatInputComponent,
   ],
 })
 export class ChatModule { }

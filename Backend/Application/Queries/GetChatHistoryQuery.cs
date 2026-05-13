@@ -12,6 +12,7 @@ public class GetChatHistoryQueryHandler
 {
     private readonly IChatSessionRepository _chatSessionRepository;
 
+    // ✅ CaseInsensitive pour gérer l'ancien PascalCase ET le nouveau camelCase
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -28,9 +29,6 @@ public class GetChatHistoryQueryHandler
     {
         var session = await _chatSessionRepository.GetByIdAsync(request.SessionId);
 
-        if (session == null)
-            throw new KeyNotFoundException($"Session {request.SessionId} introuvable.");
-
         return session.Messages
             .OrderBy(m => m.CreatedAt)
             .Select(m => new ChatMessageDto
@@ -45,16 +43,10 @@ public class GetChatHistoryQueryHandler
             .ToList();
     }
 
-    private static List<SourceDto> DeserializeSources(string? sourcesJson)
+    private static List<SourceDto> DeserializeSources(string? json)
     {
-        if (string.IsNullOrWhiteSpace(sourcesJson)) return [];
-        try
-        {
-            return JsonSerializer.Deserialize<List<SourceDto>>(sourcesJson, _jsonOptions) ?? [];
-        }
-        catch
-        {
-            return [];
-        }
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<SourceDto>>(json, _jsonOptions) ?? []; }
+        catch { return []; }
     }
 }

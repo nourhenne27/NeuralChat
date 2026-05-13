@@ -3,6 +3,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { AdminStatsDto, ActivityItemDto } from '../../../core/models/document';
 import { UserDto } from '../../../core/models/auth-response';
 import { ModalService } from '../../../core/services/modal.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { normalizeRole } from '../../../core/utils/role.utils';
 
 @Component({
@@ -30,13 +31,20 @@ export class StatisticsComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private authService:  AuthService // ✅ ajout
   ) {}
 
   ngOnInit(): void {
     this.loadStats();
-    this.loadUsers();
     this.loadActivity();
+
+    // ✅ loadUsers() conditionné à isAdmin() — évite 403 pour les Managers
+    if (this.authService.isAdmin()) {
+      this.loadUsers();
+    } else {
+      this.isLoadingUsers = false;
+    }
   }
 
   private loadStats(): void {
@@ -50,9 +58,12 @@ export class StatisticsComponent implements OnInit {
         this.stats[0].value = questions.toLocaleString('fr-FR');
         this.stats[1].value = documents.toLocaleString('fr-FR');
         this.stats[2].value = users.toLocaleString('fr-FR');
-        this.stats[3].value = confidence.toFixed(0) + '%';
+        // ✅ fix : score backend est entre 0 et 1 → multiplier par 100
+        this.stats[3].value = (confidence * 100).toFixed(0) + '%';
       },
-      error: (err: unknown) => this.showError(((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur stats')
+      error: (err: unknown) => this.showError(
+        ((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur stats'
+      )
     });
   }
 
@@ -64,7 +75,9 @@ export class StatisticsComponent implements OnInit {
         this.isLoadingUsers = false;
       },
       error: (err: unknown) => {
-        this.showError(((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur utilisateurs');
+        this.showError(
+          ((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur utilisateurs'
+        );
         this.isLoadingUsers = false;
       }
     });
@@ -74,7 +87,7 @@ export class StatisticsComponent implements OnInit {
     this.isLoadingActivity = true;
     this.adminService.getActivity(10).subscribe({
       next:  acts => { this.activities = acts; this.isLoadingActivity = false; },
-      error: () => { this.isLoadingActivity = false; }
+      error: ()   => { this.isLoadingActivity = false; }
     });
   }
 
@@ -87,7 +100,7 @@ export class StatisticsComponent implements OnInit {
       this.adminService.registerUser(result).subscribe({
         next: () => {
           this.showSuccess(`✅ Utilisateur « ${result.email} » créé avec succès.`);
-          this.loadUsers();
+          if (this.authService.isAdmin()) this.loadUsers();
           this.loadStats();
         },
         error: (err: unknown) => {
@@ -109,13 +122,15 @@ export class StatisticsComponent implements OnInit {
         if (user) user.role = role;
         this.showSuccess('Rôle mis à jour.');
       },
-      error: (err: unknown) => this.showError(((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur rôle')
+      error: (err: unknown) => this.showError(
+        ((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur rôle'
+      )
     });
   }
 
   exportReport(): void {
     this.adminService.exportReport().subscribe({
-      next: () => this.showSuccess('Export téléchargé avec succès.'),
+      next:  () => this.showSuccess('Export téléchargé avec succès.'),
       error: () => this.showError('Erreur lors de l\'export.')
     });
   }
@@ -129,9 +144,7 @@ export class StatisticsComponent implements OnInit {
   }
 
   formatActivity(act: ActivityItemDto): string {
-    const actor  = act.actor  ?? '';
-    const action = act.action ?? '';
-    return `${actor} ${action}`;
+    return `${act.actor ?? ''} ${act.action ?? ''}`;
   }
 
   formatTime(isoDate: string): string {
@@ -160,5 +173,5 @@ export class StatisticsComponent implements OnInit {
     this.success = msg; this.error = '';
     setTimeout(() => this.success = '', 4000);
   }
-}
+} 
 

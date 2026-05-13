@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef
+  Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { FeedbackResult }  from '../feedback-modal/feedback-modal.component';
   templateUrl: './chat-window.component.html',
   styleUrls:   ['./chat-window.component.scss']
 })
-export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ChatWindowComponent implements OnInit, OnDestroy {
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 
@@ -36,6 +36,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   private subs =         new Subscription();
   private shouldScroll = false;
   private isStreaming =  false;
+  private sessionLoadedFromSessions = false;
 
   constructor(
     private chatService:     ChatService,
@@ -57,6 +58,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           if (id === null) {
             this.resetChat();
           } else if (id !== this.sessionId && !this.isStreaming) {
+            if (this.sessionLoadedFromSessions && id === this.sessionId) {
+              this.sessionLoadedFromSessions = false;
+              return;
+            }
+            this.sessionLoadedFromSessions = false;
             this.loadSession(id);
           } else if (id !== this.sessionId && this.isStreaming) {
             this.sessionId = id;
@@ -70,10 +76,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.subs.unsubscribe();
   }
 
-  ngAfterViewChecked(): void {}
-
   private scheduleScroll(): void {
-    if (this.shouldScroll) return; // déjà planifié
+    if (this.shouldScroll) return;
     this.shouldScroll = true;
     requestAnimationFrame(() => {
       this.scrollToBottom();
@@ -93,22 +97,21 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
         if (autoLoadLast && sorted.length > 0 && !this.sessionId) {
           const first = sorted[0];
           this.sessionId = first.id;
-          this.messages = first.messages
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-            .map(m => {
-              const fb = this.restoreFeedback(m.id);
-              return {
-                role:      m.role,
-                content:   m.content,
-                timestamp: new Date(m.createdAt),
-                messageId: m.id,
-                sources:   this.normalizeSources(m.sources),
-                liked:     fb.liked,
-                disliked:  fb.disliked
-              };
-            });
-          this.scheduleScroll();
-          this.chatState.setSessionId(first.id);
+
+          this.chatService.getHistory(first.id).subscribe({
+            next: msgs => {
+              this.messages = this.mapMessages(msgs);
+              this.scheduleScroll();
+              this.sessionLoadedFromSessions = true;
+              this.chatState.setSessionId(first.id);
+            },
+            error: () => {
+              this.messages = this.mapMessages(first.messages);
+              this.scheduleScroll();
+              this.sessionLoadedFromSessions = true;
+              this.chatState.setSessionId(first.id);
+            }
+          });
         }
       },
       error: () => this.chatState.setSessions([])
@@ -123,30 +126,20 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.sessionId   = null;
     this.error       = '';
     this.inputText   = '';
+    this.sessionLoadedFromSessions = false;
   }
 
   loadSession(id: string): void {
     this.streamSub?.unsubscribe();
-    this.isLoading  = false;
-    this.isStreaming = false;
-    this.sessionId  = id;
-    this.error      = '';
-    this.messages   = [];
+    this.isLoading   = false;
+    this.isStreaming  = false;
+    this.sessionId   = id;
+    this.error       = '';
+    this.messages    = [];
 
     this.chatService.getHistory(id).subscribe({
       next: res => {
-        this.messages = res.map(m => {
-          const fb = this.restoreFeedback(m.id);
-          return {
-            role:      m.role,
-            content:   m.content,
-            timestamp: new Date(m.createdAt),
-            messageId: m.id,
-            sources:   this.normalizeSources(m.sources),
-            liked:     fb.liked,
-            disliked:  fb.disliked
-          };
-        });
+        this.messages = this.mapMessages(res);
         this.scheduleScroll();
       },
       error: () => {
@@ -154,6 +147,23 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
         this.messages = [];
       }
     });
+  }
+
+  private mapMessages(msgs: any[]): ChatMessage[] {
+    return msgs
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .map(m => {
+        const fb = this.restoreFeedback(m.id);
+        return {
+          role:      m.role,
+          content:   m.content,
+          timestamp: new Date(m.createdAt),
+          messageId: m.id,
+          sources:   this.normalizeSources(m.sources),
+          liked:     fb.liked,
+          disliked:  fb.disliked
+        };
+      });
   }
 
   sendMessage(question?: string): void {
@@ -192,9 +202,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           }
           if (token.startsWith('[SOURCES]')) {
             try {
-              const parsed: Partial<SourceDto>[] = JSON.parse(token.slice(9));
+              const parsed: SourceDto[] = JSON.parse(token.slice(9));
               assistantMsg.sources = this.normalizeSources(parsed);
-            } catch {}
+            } catch {
+              assistantMsg.sources = [];
+            }
             this.messages = [...this.messages];
             this.cdr.detectChanges();
             return;
@@ -216,31 +228,31 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
           this.isLoading   = false;
           this.isStreaming  = false;
         },
-complete: () => {
-  assistantMsg.isStreaming = false;
-  
-  const content = assistantMsg.content.toLowerCase();
-const noAnswerPhrases = [
-  'je ne trouve pas',
-  'je n\'ai pas trouvé',
-  'je n\'ai trouvé aucune',
-  'could not find',
-  'i could not find',
-  'no information',
-  'aucune information',
-  'pas d\'information',
-  'je ne peux pas comprendre',  // ← ajouter
-  'puis-je vous aider avec autre chose',  // ← ajouter
-];
-  
-  assistantMsg.hasAnswer = !!assistantMsg.content && 
-    !noAnswerPhrases.some(phrase => content.includes(phrase));
+        complete: () => {
+          assistantMsg.isStreaming = false;
 
-  this.messages    = [...this.messages];
-  this.isLoading   = false;
-  this.isStreaming  = false;
-  this.scheduleScroll();
-}
+          const content = assistantMsg.content.toLowerCase();
+          const noAnswerPhrases = [
+            'je ne trouve pas',
+            'je n\'ai pas trouvé',
+            'je n\'ai trouvé aucune',
+            'could not find',
+            'i could not find',
+            'no information',
+            'aucune information',
+            'pas d\'information',
+            'je ne peux pas comprendre',
+            'puis-je vous aider avec autre chose',
+          ];
+
+          assistantMsg.hasAnswer = !!assistantMsg.content &&
+            !noAnswerPhrases.some(phrase => content.includes(phrase));
+
+          this.messages   = [...this.messages];
+          this.isLoading  = false;
+          this.isStreaming = false;
+          this.scheduleScroll();
+        }
       });
   }
 
@@ -261,7 +273,13 @@ const noAnswerPhrases = [
     this.pendingFeedbackMsg = null;
     this.feedbackService.submitFeedback({
       messageId: msg.messageId, score: result.score, comment: result.comment
-    }).subscribe({ error: () => { msg.liked = false; msg.disliked = false; try { localStorage.removeItem(this.feedbackKey(msg.messageId!)); } catch {} } });
+    }).subscribe({
+      error: () => {
+        msg.liked = false;
+        msg.disliked = false;
+        try { localStorage.removeItem(this.feedbackKey(msg.messageId!)); } catch {}
+      }
+    });
   }
 
   onFeedbackCancelled(): void {
@@ -288,25 +306,25 @@ const noAnswerPhrases = [
     });
   }
 
-  private normalizeSources(sources: Partial<SourceDto>[] | undefined): SourceDto[] {
+  private normalizeSources(sources: any[] | undefined): SourceDto[] {
     if (!sources?.length) return [];
     const seen = new Set<string>();
     return sources
-      .map((s) => ({
-        documentTitle: (s as any).documentTitle ?? (s as any).DocumentTitle ?? (s as any).title ?? (s as any).name ?? '',
-        excerpt:       s.excerpt       ?? (s as any).Excerpt ?? '',
-        score:         s.score         ?? (s as any).Score   ?? 0
+      .map(s => ({
+        documentTitle: s.documentTitle ?? s.DocumentTitle ?? s.title ?? s.name ?? '',
+        excerpt:       s.excerpt       ?? s.Excerpt       ?? '',
+        score:         s.score         ?? s.Score         ?? 0
       }))
+      .filter(s => s.documentTitle !== '')
       .sort((a, b) => b.score - a.score)
       .filter(s => {
-        if (!s.documentTitle || seen.has(s.documentTitle)) return false;
+        if (seen.has(s.documentTitle)) return false;
         seen.add(s.documentTitle);
         return true;
       })
       .slice(0, 5);
   }
 
-  // ── Feedback persistence (localStorage) ──────────────────
   private feedbackKey(messageId: string): string {
     return `feedback_${messageId}`;
   }
@@ -326,7 +344,8 @@ const noAnswerPhrases = [
 
   private scrollToBottom(): void {
     try {
-      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+      this.scrollContainer.nativeElement.scrollTop =
+        this.scrollContainer.nativeElement.scrollHeight;
     } catch {}
   }
-}
+} 

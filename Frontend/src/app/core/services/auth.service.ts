@@ -5,8 +5,7 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import {
   AuthResponseDto,
-  LoginRequestDto,
-  RegisterRequestDto
+  LoginRequestDto
 } from '../models/auth-response';
 
 @Injectable({ providedIn: 'root' })
@@ -31,17 +30,14 @@ export class AuthService {
       .pipe(tap(res => this.saveSession(res)));
   }
 
-  register(payload: RegisterRequestDto): Observable<AuthResponseDto> {
-    return this.http
-      .post<AuthResponseDto>(`${this.API}/auth/register`, payload)
-      .pipe(tap(res => this.saveSession(res)));
-  }
+  // ✅ register() supprimé — l'inscription se fait uniquement via Admin panel
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
-    this.currentUser$.next(null);
-    this.router.navigate(['/auth/login']);
+    // ✅ Appel HTTP backend logout avant nettoyage local
+    this.http.post(`${this.API}/auth/logout`, {}).subscribe({
+      complete: () => this.clearSession(),
+      error:    () => this.clearSession() // on nettoie même si le backend échoue
+    });
   }
 
   // ── Token / session ───────────────────────────────────────
@@ -51,7 +47,12 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000 > Date.now();
+    } catch { return false; }
   }
 
   // ── Role helpers ──────────────────────────────────────────
@@ -75,6 +76,13 @@ export class AuthService {
     localStorage.setItem(this.TOKEN_KEY, res.token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(res));
     this.currentUser$.next(res);
+  }
+
+  private clearSession(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+    this.currentUser$.next(null);
+    this.router.navigate(['/auth/login']);
   }
 
   private loadUser(): AuthResponseDto | null {

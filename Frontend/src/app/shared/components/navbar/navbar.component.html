@@ -9,7 +9,7 @@
       <!-- Avatar cliquable -->
       <div class="user-avatar" (click)="openFilePicker()" title="Changer la photo">
         <img *ngIf="avatarUrl" [src]="avatarUrl" class="avatar-img" alt="avatar" />
-        <span *ngIf="!avatarUrl">{{ currentUser.email[0].toUpperCase() }}</span>
+       <span *ngIf="!avatarUrl">{{ currentUser.email[0].toUpperCase() }}</span>
         <div class="avatar-overlay">
           <span *ngIf="!avatarUrl">📷</span>
           <span *ngIf="avatarUrl" class="avatar-overlay-actions">

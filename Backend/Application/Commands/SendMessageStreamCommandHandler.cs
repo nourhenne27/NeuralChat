@@ -61,6 +61,7 @@ public class SendMessageStreamCommandHandler
 
         var fullResponse = new StringBuilder();
         var sourcesRaw = string.Empty;
+        var chunkIdsRaw = string.Empty; // ✅ Nouveau
 
         await foreach (var token in _ragService.GetResponseStreamAsync(request.Message, sessionId)
             .WithCancellation(cancellationToken))
@@ -68,6 +69,13 @@ public class SendMessageStreamCommandHandler
             if (token.StartsWith("[SOURCES_DATA]"))
             {
                 sourcesRaw = token[14..];
+                continue;
+            }
+
+            // ✅ Capturer les chunkIds sans les envoyer au client
+            if (token.StartsWith("[CHUNK_IDS]"))
+            {
+                chunkIdsRaw = token[11..];
                 continue;
             }
 
@@ -96,11 +104,12 @@ public class SendMessageStreamCommandHandler
             Role = "assistant",
             Content = fullResponse.ToString(),
             CreatedAt = DateTime.UtcNow.AddMilliseconds(1),
-            SourcesJson = !string.IsNullOrEmpty(sourcesRaw) ? sourcesRaw : null
+            SourcesJson = !string.IsNullOrEmpty(sourcesRaw) ? sourcesRaw : null,
+            // ✅ Stocker les chunkIds pour RLHF dans SubmitFeedbackCommandHandler
+            ChunkIdsJson = !string.IsNullOrEmpty(chunkIdsRaw) ? chunkIdsRaw : null
         };
 
         await _chatSessionRepository.AddMessagesAsync(sessionId, userMessage, assistantMessage);
-
         yield return $"[MESSAGE_ID:{assistantMessage.Id}]";
     }
-} 
+}

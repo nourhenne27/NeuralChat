@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Pgvector.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
 
 namespace Infrastructure.Persistence.RAG;
 
@@ -8,10 +9,23 @@ public class VectorDbContextFactory : IDesignTimeDbContextFactory<VectorDbContex
 {
     public VectorDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<VectorDbContext>();
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile(
+                Path.Combine(Directory.GetCurrentDirectory(), "../Api/appsettings.json"),
+                optional: false)
+            .AddJsonFile(
+                Path.Combine(Directory.GetCurrentDirectory(), "../Api/appsettings.Development.json"),
+                optional: true)
+            .AddEnvironmentVariables()
+            .Build();
 
+        var connectionString = configuration.GetConnectionString("VectorDb")
+            ?? throw new InvalidOperationException(
+                "Connection string 'VectorDb' not found.");
+
+        var optionsBuilder = new DbContextOptionsBuilder<VectorDbContext>();
         optionsBuilder.UseNpgsql(
-            "Host=localhost;Database=api_vectors;Username=postgres;Password=pfechatbot;TrustServerCertificate=true;",
+            connectionString,
             b =>
             {
                 b.MigrationsAssembly("Infrastructure");

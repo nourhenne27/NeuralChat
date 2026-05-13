@@ -76,15 +76,8 @@ export class DocumentListComponent implements OnInit {
     };
   }
 
-  // ── Delete avec confirmation inline ──────────────────────
-
-  onDeleteClick(id: string): void {
-    this.confirmDeleteId = id;
-  }
-
-  cancelDelete(): void {
-    this.confirmDeleteId = null;
-  }
+  onDeleteClick(id: string): void { this.confirmDeleteId = id; }
+  cancelDelete():  void { this.confirmDeleteId = null; }
 
   confirmDelete(): void {
     if (!this.confirmDeleteId) return;
@@ -97,13 +90,7 @@ export class DocumentListComponent implements OnInit {
     });
   }
 
-  // ── Drag & drop ───────────────────────────────────────────
-
-  onDragOver(e: DragEvent): void {
-    e.preventDefault();
-    this.isDragOver = true;
-  }
-
+  onDragOver(e: DragEvent): void { e.preventDefault(); this.isDragOver = true; }
   onDragLeave(): void { this.isDragOver = false; }
 
   onDrop(e: DragEvent): void {
@@ -166,17 +153,19 @@ export class DocumentListComponent implements OnInit {
 
   getStatusClass(status: string): string {
     return ({
-      Indexed: 'status-indexed',
-      Pending: 'status-pending',
-      Failed:  'status-error'
+      Indexed:  'status-indexed',
+      Pending:  'status-pending',
+      Failed:   'status-error',
+      Deleting: 'status-pending' // ✅ même style visuel que Pending (en cours)
     } as Record<string, string>)[status] ?? '';
   }
 
   getStatusLabel(status: string): string {
     return ({
-      Indexed: '● Indexé',
-      Pending: '◌ En attente',
-      Failed:  '✕ Erreur'
+      Indexed:  '● Indexé',
+      Pending:  '◌ En attente',
+      Failed:   '✕ Erreur',
+      Deleting: '⟳ Suppression...' // ✅ label propre pour Deleting
     } as Record<string, string>)[status] ?? status;
   }
-}
+} 

@@ -14,7 +14,6 @@ namespace Infrastructure.Auth
     {
         private readonly JwtOptions _jwtOptions;
 
-        // CORRECTION : IOptions<JwtOptions> au lieu de JwtOptions directement
         public JwtTokenGenerator(IOptions<JwtOptions> jwtOptions)
         {
             _jwtOptions = jwtOptions.Value;

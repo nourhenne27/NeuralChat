@@ -10,9 +10,6 @@ export class FeedbackService {
   constructor(private http: HttpClient) {}
 
   submitFeedback(dto: FeedbackDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(
-      `${environment.apiUrl}/feedback`,
-      dto
-    );
+  return this.http.post<{ message: string }>(`${environment.apiUrl}/Feedback`, dto);
   }
 }

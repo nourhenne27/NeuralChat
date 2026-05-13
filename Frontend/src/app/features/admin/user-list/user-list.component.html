@@ -25,14 +25,14 @@
 
       <td>
         <div class="role-cell">
-          <select
-            [value]="user.role"
-            [disabled]="loadingRoleUserId === user.id"
-            (change)="onRoleChange(user.id, $event)">
-            <option value="User">User</option>
-            <option value="Manager">Manager</option>
-            <option value="Admin">Admin</option>
-          </select>
+<select
+  [ngModel]="user.role"
+  [disabled]="loadingRoleUserId === user.id"
+  (change)="changeRole(user.id, $any($event.target).value)">
+  <option value="User">User</option>
+  <option value="Manager">Manager</option>
+  <option value="Admin">Admin</option>
+</select>
           <span class="role-spinner" *ngIf="loadingRoleUserId === user.id">⏳</span>
         </div>
       </td>

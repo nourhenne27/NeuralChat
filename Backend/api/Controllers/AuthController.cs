@@ -1,5 +1,7 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Application.Commands;
 using Application.DTOs;
 
@@ -18,15 +20,22 @@ public class AuthController : ControllerBase
 
     // ===================== LOGIN =====================
     [HttpPost("login")]
+    [EnableRateLimiting("LoginPolicy")] // ✅ Correct en .NET 8
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        // KeyNotFoundException (email inexistant) et InvalidOperationException
-        // (mauvais mot de passe) sont gérés par ErrorHandlingMiddleware → 404/400
         var command = new LoginUserCommand(dto.Email, dto.Password);
         var result = await _mediator.Send(command);
         return Ok(result);
+    }
+
+    // ===================== LOGOUT =====================
+    [HttpPost("logout")]
+    [Authorize]
+    public IActionResult Logout()
+    {
+        return Ok(new { message = "Déconnexion réussie. Supprimez le token côté client." });
     }
 }

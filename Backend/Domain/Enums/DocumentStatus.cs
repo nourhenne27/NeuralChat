@@ -4,5 +4,6 @@ public enum DocumentStatus
 {
     Pending,
     Indexed,
-    Failed
+    Failed,
+    Deleting 
 }
