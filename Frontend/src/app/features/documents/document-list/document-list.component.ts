@@ -43,7 +43,7 @@ export class DocumentListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.canDelete = this.authService.isAdminOrManager();
+    this.canDelete = this.authService.isAdmin();
     this.canUpload = this.authService.isAdminOrManager();
     this.loadDocuments();
   }

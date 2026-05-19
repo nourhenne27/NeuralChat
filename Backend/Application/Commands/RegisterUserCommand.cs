@@ -3,10 +3,11 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Application.Abstractions;
+using Application.Common.Interfaces;
 using Application.DTOs;
 
 namespace Application.Commands;
- 
+
 public record RegisterUserCommand(string Email, string Password, UserRole Role) : IRequest<AuthResponseDto>;
 
 public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, AuthResponseDto>
@@ -14,20 +15,22 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, A
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly ISqlServerDbContext _context;
 
     public RegisterUserCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        ISqlServerDbContext context)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _context = context;
     }
 
     public async Task<AuthResponseDto> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        // CORRECTION : vérifier si l'email existe déjà et bloquer l'inscription
         bool emailExists = true;
         try { await _userRepository.GetByEmailAsync(request.Email); }
         catch (KeyNotFoundException) { emailExists = false; }
@@ -44,14 +47,24 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, A
 
         await _userRepository.AddAsync(user);
 
-        var token = _jwtTokenGenerator.GenerateToken(user);
+        var accessToken = _jwtTokenGenerator.GenerateToken(user);
+        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = refreshToken,
+            UserId = user.Id,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new AuthResponseDto
         {
-            Token = token,
+            Token = accessToken,
+            RefreshToken = refreshToken,
             UserId = user.Id,
             Email = user.Email,
             Role = user.Role.ToString()
         };
     }
-}
+} 

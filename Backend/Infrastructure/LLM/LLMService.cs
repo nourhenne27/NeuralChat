@@ -17,15 +17,11 @@ public class LLMService : ILLMService
         _http.Timeout = TimeSpan.FromMinutes(4);
     }
 
-    /// <summary>
-    /// Version non-streaming (actuelle, bloquante)
-    /// </summary>
     public async Task<string> GenerateResponseAsync(
         string prompt,
         List<(string Role, string Content)>? conversationHistory = null)
     {
         var messages = BuildMessages(prompt, conversationHistory);
-
         var url = $"{_options.BaseUrl}/api/chat";
 
         var requestBody = new
@@ -47,15 +43,11 @@ public class LLMService : ILLMService
             ?? "Désolé, je n'ai pas pu générer de réponse.";
     }
 
-    /// <summary>
-    /// Version Streaming - lit le NDJSON ligne par ligne
-    /// </summary>
     public async IAsyncEnumerable<string> GenerateResponseStreamAsync(
         string prompt,
         List<(string Role, string Content)>? conversationHistory = null)
     {
         var messages = BuildMessages(prompt, conversationHistory);
-
         var url = $"{_options.BaseUrl}/api/chat";
 
         var requestBody = new
@@ -70,9 +62,6 @@ public class LLMService : ILLMService
         var response = await _http.PostAsJsonAsync(url, requestBody);
         response.EnsureSuccessStatusCode();
 
-        // Ollama stream renvoie du NDJSON (une ligne JSON par token)
-        // ReadFromJsonAsAsyncEnumerable attend un JSON array -> erreur
-        // Il faut lire ligne par ligne manuellement
         using var stream = await response.Content.ReadAsStreamAsync();
         using var reader = new System.IO.StreamReader(stream);
 
@@ -95,12 +84,17 @@ public class LLMService : ILLMService
         string prompt,
         List<(string Role, string Content)>? conversationHistory)
     {
-        var systemPrompt = "You are a RAG assistant. " +
-                           "Read every document excerpt carefully word by word. " +
-                           "If the answer is in the excerpts, state it directly and concisely. " +
-                           "NEVER say information is missing if it appears in the excerpts. " +
-                           "NEVER add preamble, hedging, or unnecessary qualifications. " +
-                           "Always answer in the same language as the question.";
+        var systemPrompt =
+            "Tu es NeuralChat, un assistant interne expert de Poulina Group Holding. " +
+            "Tu aides les employés à trouver des informations dans les documents internes de l'entreprise. " +
+            "Réponds UNIQUEMENT en te basant sur les extraits de documents fournis. " +
+            "Ne jamais inventer ou supposer des informations absentes des extraits. " +
+            "Réponds DIRECTEMENT sans introduction inutile. " +
+            "Si la réponse est présente dans les extraits, fournis-la de manière claire et structurée. " +
+            "Utilise des listes à puces quand c'est pertinent. " +
+            "Cite toujours le document source entre parenthèses à la fin de chaque information clé. " +
+            "Si la réponse est introuvable, réponds exactement : \"Je ne trouve pas cette information dans les documents internes disponibles.\" " +
+            "Réponds TOUJOURS dans la même langue que la question.";
 
         var messages = new List<object>
         {
@@ -122,7 +116,6 @@ public class LLMService : ILLMService
     }
 }
 
-// === Classes de réponse Ollama ===
 public class OllamaChatResponse
 {
     public OllamaMessage? Message { get; set; }

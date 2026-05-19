@@ -24,11 +24,9 @@ export class ErrorInterceptor implements HttpInterceptor {
 
         let message = 'Une erreur inattendue est survenue.';
 
-        if (error.status === 401) {
-          this.authService.logout();
-          this.router.navigate(['/auth/login']);
-          message = 'Session expirée. Veuillez vous reconnecter.';
-        }
+if (error.status === 401) {
+  return throwError(() => new Error('Non autorisé'));
+} 
         else if (error.status === 403) {
           this.router.navigate(['/chat']);
           message = 'Accès refusé. Droits insuffisants.';

@@ -9,4 +9,7 @@ public interface ISqlServerDbContext
     DbSet<ChatSession> ChatSessions { get; }
     DbSet<ChatMessage> ChatMessages { get; }
     DbSet<Feedback> Feedbacks { get; }
+    DbSet<RefreshToken> RefreshTokens { get; }
+
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

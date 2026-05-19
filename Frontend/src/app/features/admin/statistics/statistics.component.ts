@@ -58,8 +58,7 @@ export class StatisticsComponent implements OnInit {
         this.stats[0].value = questions.toLocaleString('fr-FR');
         this.stats[1].value = documents.toLocaleString('fr-FR');
         this.stats[2].value = users.toLocaleString('fr-FR');
-        // ✅ fix : score backend est entre 0 et 1 → multiplier par 100
-        this.stats[3].value = (confidence * 100).toFixed(0) + '%';
+        this.stats[3].value = confidence.toFixed(1) + '%';
       },
       error: (err: unknown) => this.showError(
         ((err as any)?.error?.message ?? (err as any)?.message) ?? 'Erreur stats'

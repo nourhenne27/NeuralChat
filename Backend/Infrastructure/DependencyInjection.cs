@@ -39,7 +39,7 @@ public static class DependencyInjection
             options.UseSqlServer(
                 configuration.GetConnectionString("SqlServer"),
                 b => b.MigrationsAssembly(typeof(SqlServerDbContext).Assembly.GetName().Name)
-            ));
+            )); 
 
         services.AddDbContext<VectorDbContext>(options =>
             options.UseNpgsql(

@@ -14,10 +14,7 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
 
     public async Task Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(request.UserId);
-        if (user == null)
-            throw new KeyNotFoundException($"Utilisateur {request.UserId} introuvable.");
-
+        await _userRepository.GetByIdAsync(request.UserId); // lève KeyNotFoundException si absent
         await _userRepository.DeleteAsync(request.UserId);
     }
-}
+} 

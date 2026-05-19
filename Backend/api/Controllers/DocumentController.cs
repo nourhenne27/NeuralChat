@@ -82,7 +82,7 @@ public class DocumentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteDocument(Guid id)
     {
         await _mediator.Send(new DeleteDocumentCommand(id));

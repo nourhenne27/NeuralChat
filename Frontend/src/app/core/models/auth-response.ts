@@ -2,14 +2,11 @@
 
 export interface AuthResponseDto {
   token: string;
+  refreshToken: string;
   userId: string;
   email: string;
-
-  // ✅ ajoutés pour éviter les incohérences
   username?: string;
   role: 'User' | 'Manager' | 'Admin';
-
-  // ✅ optionnel selon backend
   expiresAt?: string;
 }
 

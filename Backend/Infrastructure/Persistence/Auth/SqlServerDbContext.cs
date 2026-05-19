@@ -15,6 +15,11 @@ public class SqlServerDbContext : DbContext, ISqlServerDbContext
     public DbSet<ChatSession> ChatSessions { get; set; } = null!;
     public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
     public DbSet<Feedback> Feedbacks { get; set; } = null!;
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
+    public override Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+        => base.SaveChangesAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,8 +29,8 @@ public class SqlServerDbContext : DbContext, ISqlServerDbContext
         modelBuilder.Entity<ChatSession>().ToTable("ChatSessions");
         modelBuilder.Entity<ChatMessage>().ToTable("ChatMessages");
         modelBuilder.Entity<Feedback>().ToTable("Feedbacks");
+        modelBuilder.Entity<RefreshToken>().ToTable("RefreshTokens");
 
-        // ✅ Contrainte UNIQUE sur Email (fix race condition)
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
@@ -53,5 +58,11 @@ public class SqlServerDbContext : DbContext, ISqlServerDbContext
             .WithMany("Feedbacks")
             .HasForeignKey(f => f.MessageId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(r => r.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,6 +1,9 @@
-﻿namespace Application.Abstractions;
+﻿using Domain.Entities;
+
+namespace Application.Abstractions;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(Domain.Entities.User user);
+    string GenerateToken(User user);
+    string GenerateRefreshToken();
 }

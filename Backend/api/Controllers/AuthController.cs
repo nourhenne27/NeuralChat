@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
 
     // ===================== LOGIN =====================
     [HttpPost("login")]
-    [EnableRateLimiting("LoginPolicy")] // ✅ Correct en .NET 8
+    [EnableRateLimiting("LoginPolicy")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
         if (!ModelState.IsValid)
@@ -31,11 +31,28 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    // ===================== REFRESH TOKEN =====================
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var command = new RefreshTokenCommand(dto.RefreshToken);
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
     // ===================== LOGOUT =====================
     [HttpPost("logout")]
     [Authorize]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout([FromBody] LogoutRequestDto dto)
     {
-        return Ok(new { message = "Déconnexion réussie. Supprimez le token côté client." });
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var command = new LogoutCommand(dto.RefreshToken);
+        await _mediator.Send(command);
+        return Ok(new { message = "Déconnexion réussie." });
     }
 }
